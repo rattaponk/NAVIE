@@ -11,7 +11,7 @@
         android:layout_height="64dp"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="148dp"
+        android:layout_marginTop="136dp"
         app:srcCompat="@drawable/navie_logo" />
 
     <EditText
@@ -22,10 +22,12 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="24dp"
         android:backgroundTint="@color/colorGray"
-        android:ems="10"
+        android:ems="12"
         android:hint="Email-Address"
         android:inputType="textEmailAddress"
-        android:textColorHint="@color/colorGray" />
+        android:textColor="@android:color/white"
+        android:textColorHint="@color/colorGray"
+        android:textCursorDrawable="@color/colorGray" />
 
     <EditText
         android:id="@+id/et_password"
@@ -35,19 +37,23 @@
         android:layout_below="@+id/et_email"
         android:layout_marginTop="16dp"
         android:backgroundTint="@color/colorGray"
-        android:ems="10"
+        android:ems="12"
         android:hint="Password"
         android:inputType="textPassword"
-        android:textColorHint="@color/colorGray" />
+        android:textColor="@android:color/white"
+        android:textColorHint="@color/colorGray"
+        android:textCursorDrawable="@color/colorGray" />
 
     <Button
         android:id="@+id/bt_login"
-        android:layout_width="128dp"
-        android:layout_height="32dp"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
         android:layout_below="@+id/et_password"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="24dp"
-        android:background="@drawable/round_loginbutton"
+        android:background="@drawable/round_login"
+        android:foreground="@drawable/ripple_effect_login"
+        android:paddingHorizontal="36dp"
         android:text="Login"
         android:textAllCaps="false"
         android:textColor="@color/colorAccent"
@@ -58,38 +64,39 @@
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_below="@+id/bt_login"
-        android:layout_marginTop="16dp">
+        android:layout_marginTop="24dp">
 
         <View
             android:layout_width="1dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"/>
+            android:layout_weight="1" />
 
         <TextView
-            android:id="@+id/tv_"
+            android:id="@+id/tv_create"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="2"
+            android:foreground="?attr/selectableItemBackground"
             android:gravity="center"
             android:text="CREATE NEW ACCOUNT"
-            android:textSize="10sp"
-            android:textColor="@color/colorGray" />
+            android:textColor="@color/bg_tab_text_color"
+            android:textSize="10sp" />
 
         <TextView
             android:id="@+id/tv_forgot"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="2"
+            android:foreground="?attr/selectableItemBackground"
             android:gravity="center"
             android:text="FORGOT PASSWORD?"
-
-            android:textSize="10sp"
-            android:textColor="@color/colorGray" />
+            android:textColor="@color/bg_tab_text_color"
+            android:textSize="10sp" />
 
         <View
             android:layout_width="1dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"/>
+            android:layout_weight="1" />
 
     </LinearLayout>
 

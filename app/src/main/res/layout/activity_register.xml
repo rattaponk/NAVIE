@@ -14,113 +14,136 @@
         android:layout_marginTop="32dp"
         app:srcCompat="@drawable/navie_logo" />
 
-    <EditText
-        android:id="@+id/et_email"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/iv_logo"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="24dp"
-        android:backgroundTint="@color/colorGray"
-        android:ems="12"
-        android:hint="Email-Address"
-        android:inputType="textEmailAddress"
-        android:textColorHint="@color/colorGray" />
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingLeft="48dp"
+        android:paddingRight="48dp">
 
-    <EditText
-        android:id="@+id/et_password"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/et_email"
-        android:layout_below="@+id/et_email"
-        android:layout_marginTop="16dp"
-        android:backgroundTint="@color/colorGray"
-        android:ems="12"
-        android:hint="Password"
-        android:inputType="textPassword"
-        android:textColorHint="@color/colorGray" />
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
 
-    <EditText
-        android:id="@+id/et_cpassword"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/et_password"
-        android:layout_below="@+id/et_password"
-        android:layout_marginTop="16dp"
-        android:backgroundTint="@color/colorGray"
-        android:ems="12"
-        android:hint="Confirm Password"
-        android:inputType="textPassword"
-        android:textColorHint="@color/colorGray" />
+            <EditText
+                android:id="@+id/et_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/colorGray"
+                android:ems="10"
+                android:hint="Email Address"
+                android:inputType="textEmailAddress"
+                android:textColorHint="@color/colorGray" />
+        </android.support.design.widget.TextInputLayout>
 
-    <EditText
-        android:id="@+id/et_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/et_cpassword"
-        android:layout_below="@+id/et_cpassword"
-        android:layout_marginTop="16dp"
-        android:backgroundTint="@color/colorGray"
-        android:ems="12"
-        android:hint="Name"
-        android:inputType="textPersonName"
-        android:textColorHint="@color/colorGray" />
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
 
-    <RadioGroup
-        android:id="@+id/rg_gender"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/et_name"
-        android:layout_below="@+id/et_name"
-        android:layout_marginTop="16dp"
-        android:checkedButton="@+id/rb_male"
-        android:orientation="horizontal">
+            <EditText
+                android:id="@+id/et_password"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/colorGray"
+                android:ems="10"
+                android:hint="Password"
+                android:inputType="textPassword"
+                android:textColorHint="@color/colorGray" />
+        </android.support.design.widget.TextInputLayout>
 
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
 
-        <RadioButton
-            android:id="@+id/rb_male"
+            <EditText
+                android:id="@+id/et_cpassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/colorGray"
+                android:ems="10"
+                android:hint="Confirm Password"
+                android:inputType="textPassword"
+                android:textColorHint="@color/colorGray" />
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
+
+            <EditText
+                android:id="@+id/et_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/colorGray"
+                android:ems="10"
+                android:hint="Name"
+                android:inputType="textPersonName"
+                android:textColorHint="@color/colorGray" />
+        </android.support.design.widget.TextInputLayout>
+
+        <RadioGroup
+            android:id="@+id/rg_gender"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginRight="24dp"
-            android:buttonTint="@color/colorCyan"
-            android:text="Male"
-            android:textColor="@color/colorGray"
-            android:textSize="16sp" />
+            android:layout_gravity="left"
+            android:layout_marginTop="8dp"
+            android:checkedButton="@+id/rb_male"
+            android:orientation="horizontal">
 
-        <RadioButton
-            android:id="@+id/rb_female"
-            android:layout_width="wrap_content"
+            <RadioButton
+                android:id="@+id/rb_male"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingRight="36dp"
+                android:text="Male"
+                android:textColor="@color/colorGray"
+                android:textSize="16sp" />
+
+            <RadioButton
+                android:id="@+id/rb_female"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Female"
+                android:textColor="@color/colorGray"
+                android:textSize="16sp" />
+        </RadioGroup>
+
+        <android.support.design.widget.TextInputLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:buttonTint="@color/colorGray"
-            android:text="Female"
-            android:textColor="@color/colorGray"
-            android:textSize="16sp" />
-    </RadioGroup>
+            android:layout_marginTop="8dp">
 
-    <EditText
-        android:id="@+id/et_dob"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/rg_gender"
-        android:layout_below="@+id/rg_gender"
-        android:layout_marginTop="16dp"
-        android:backgroundTint="@color/colorGray"
-        android:ems="12"
-        android:hint="Date of Birth"
-        android:textColorHint="@color/colorGray" />
+            <EditText
+                android:id="@+id/et_dob"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/colorGray"
+                android:ems="10"
+                android:hint="Date of Birth"
+                android:textColorHint="@color/colorGray" />
+        </android.support.design.widget.TextInputLayout>
 
-    <Button
-        android:id="@+id/bt_register"
-        android:layout_width="wrap_content"
-        android:layout_height="48dp"
-        android:layout_below="@+id/et_dob"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="24dp"
-        android:background="@drawable/round_registerbutton"
-        android:paddingHorizontal="24dp"
-        android:text="Register"
-        android:textAllCaps="false"
-        android:textColor="@android:color/white"
-        android:textSize="20sp" />
+        <Button
+            android:id="@+id/bt_register"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:layout_marginTop="16dp"
+            android:foreground="@drawable/ripple_effect_register"
+            android:background="@drawable/round_register"
+            android:paddingHorizontal="24dp"
+            android:text="Register"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:textSize="20sp" />
+
+    </LinearLayout>
+
 
 </RelativeLayout>
