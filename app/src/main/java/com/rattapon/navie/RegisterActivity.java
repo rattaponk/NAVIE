@@ -2,6 +2,7 @@ package com.rattapon.navie;
 
 import android.app.DatePickerDialog;
 import android.content.Intent;
+import android.hardware.input.InputManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputEditText;
 import android.support.design.widget.TextInputLayout;
@@ -11,6 +12,7 @@ import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -102,24 +104,6 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         etConPass.addTextChangedListener(new GenericTextWatcher(etConPass));
     }
 
-    private void updateUI(FirebaseUser currentUser) {
-        if (currentUser != null) {
-//            // Name, email address, and profile photo Url
-//            String name = currentUser.getDisplayName();
-//            String email = currentUser.getEmail();
-//            Uri photoUrl = currentUser.getPhotoUrl();
-//
-//            // Check if user's email is verified
-//            boolean emailVerified = currentUser.isEmailVerified();
-//
-//            // The user's ID, unique to the Firebase project. Do NOT use this value to
-//            // authenticate with your backend server, if you have one. Use
-//            // FirebaseUser.getToken() instead.
-//            String uid = currentUser.getUid();
-            startActivity(new Intent(this, MapActivity.class));
-        }
-    }
-
     @Override
     public void onClick(View view) {
         if (view == btRegister) {
@@ -152,11 +136,10 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
                                     Toast.makeText(RegisterActivity.this, "Authentication success.", Toast.LENGTH_SHORT).show();
                                     FirebaseUser user = mAuth.getCurrentUser();
                                     pushRegisterData(user, email, name, gender, dob);
-                                    updateUI(user);
+                                    startActivity(new Intent(RegisterActivity.this, MapActivity.class));
                                 } else {
                                     // If sign in fails, display a message to the user.
                                     Toast.makeText(RegisterActivity.this, "Authentication failed.\n" + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                                    updateUI(null);
                                 }
                             }
                         });
@@ -179,14 +162,14 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         }
     }
 
-    public static boolean isEmailValid(String email) {
+    public boolean isEmailValid(String email) {
         String VALID_EMAIL_ADDRESS_REGEX = "^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$";
         Pattern pattern = Pattern.compile(VALID_EMAIL_ADDRESS_REGEX, Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(email);
         return matcher.find();
     }
 
-    public static boolean isPasswordValid(String password) {
+    public boolean isPasswordValid(String password) {
 //        ^                 # start-of-string
 //        (?=.*[0-9])       # a digit must occur at least once
 //        (?=.*[a-z])       # a lower case letter must occur at least once
@@ -217,4 +200,8 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         mUsersRef.child(key).setValue(user);
     }
 
+    public void hideSoftKeyboard(View view) {
+        InputMethodManager imm = (InputMethodManager)getSystemService(this.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(),0);
+    }
 }

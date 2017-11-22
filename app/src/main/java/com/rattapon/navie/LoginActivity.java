@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -58,24 +59,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         tvForgotPassword.setOnClickListener(this);
     }
 
-    private void updateUI(FirebaseUser currentUser) {
-        if (currentUser != null) {
-//            // Name, email address, and profile photo Url
-//            String name = currentUser.getDisplayName();
-//            String email = currentUser.getEmail();
-//            Uri photoUrl = currentUser.getPhotoUrl();
-//
-//            // Check if user's email is verified
-//            boolean emailVerified = currentUser.isEmailVerified();
-//
-//            // The user's ID, unique to the Firebase project. Do NOT use this value to
-//            // authenticate with your backend server, if you have one. Use
-//            // FirebaseUser.getToken() instead.
-//            String uid = currentUser.getUid();
-            startActivity(new Intent(this, MapActivity.class));
-        }
-    }
-
     @Override
     public void onClick(View view) {
         if (view == btLogin) {
@@ -89,12 +72,11 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                                 if (task.isSuccessful()) {
                                     // Sign in success, update UI with the signed-in user's information
                                     currentUser = mAuth.getCurrentUser();
-                                    updateUI(currentUser);
+                                    startActivity(new Intent(LoginActivity.this, MapActivity.class));
                                     Toast.makeText(LoginActivity.this, "Login success with " + currentUser.getEmail(), Toast.LENGTH_SHORT).show();
                                 } else {
                                     // If sign in fails, display a message to the user.
                                     Toast.makeText(LoginActivity.this, "Login failed.\n" + task.getException().getMessage(), Toast.LENGTH_LONG).show();
-                                    updateUI(null);
                                 }
                             }
                         });
@@ -108,6 +90,11 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         } else if (view == tvForgotPassword) {
 
         }
+    }
+
+    public void hideSoftKeyboard(View view) {
+        InputMethodManager imm = (InputMethodManager)getSystemService(this.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(),0);
     }
 
 }

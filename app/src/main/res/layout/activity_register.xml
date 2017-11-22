@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorPrimary">
+    android:background="@color/colorPrimary"
+    android:onClick="hideSoftKeyboard">
 
     <ImageView
         android:id="@+id/iv_logo"
@@ -135,8 +136,8 @@
             android:layout_width="wrap_content"
             android:layout_height="36dp"
             android:layout_marginTop="16dp"
-            android:foreground="@drawable/ripple_effect_register"
             android:background="@drawable/round_register"
+            android:foreground="@drawable/ripple_effect_register"
             android:paddingHorizontal="24dp"
             android:text="Register"
             android:textAllCaps="false"
