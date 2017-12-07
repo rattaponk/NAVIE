@@ -2,10 +2,7 @@ package com.rattapon.navie;
 
 import android.app.DatePickerDialog;
 import android.content.Intent;
-import android.hardware.input.InputManager;
 import android.support.annotation.NonNull;
-import android.support.design.widget.TextInputEditText;
-import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
@@ -26,6 +23,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.rattapon.navie.JavaClass.User;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -136,7 +134,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
                                     Toast.makeText(RegisterActivity.this, "Authentication success.", Toast.LENGTH_SHORT).show();
                                     FirebaseUser user = mAuth.getCurrentUser();
                                     pushRegisterData(user, email, name, gender, dob);
-                                    startActivity(new Intent(RegisterActivity.this, MapActivity.class));
+                                    startActivity(new Intent(RegisterActivity.this, EventsActivity.class));
                                 } else {
                                     // If sign in fails, display a message to the user.
                                     Toast.makeText(RegisterActivity.this, "Authentication failed.\n" + task.getException().getMessage(), Toast.LENGTH_LONG).show();

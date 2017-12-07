@@ -1,4 +1,4 @@
-package com.rattapon.navie;
+package com.rattapon.navie.JavaClass;
 
 import java.util.HashMap;
 

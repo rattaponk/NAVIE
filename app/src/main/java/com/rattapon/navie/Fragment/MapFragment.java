@@ -1,8 +1,6 @@
-package com.rattapon.navie;
+package com.rattapon.navie.Fragment;
 
-import java.util.List;
 
-import android.annotation.TargetApi;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -16,16 +14,18 @@ import android.graphics.Paint;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Build;
-import android.os.Handler;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.os.Handler;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
-import android.Manifest;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -34,6 +34,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.lemmingapex.trilateration.NonLinearLeastSquaresSolver;
 import com.lemmingapex.trilateration.TrilaterationFunction;
+import com.rattapon.navie.JavaClass.WifiList;
+import com.rattapon.navie.JavaClass.WifiPoint;
+import com.rattapon.navie.R;
 
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
@@ -43,71 +46,165 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
-public class MapActivity extends AppCompatActivity {
+/**
+ * A simple {@link Fragment} subclass.
+ */
+public class MapFragment extends Fragment {
 
-    double x, y;
-    ArrayList<String> M = new ArrayList<String>();
-    HashMap<String, Double> apX = new HashMap<String, Double>();
-    HashMap<String, Double> apY = new HashMap<String, Double>();
-    HashMap<String, Double> apRssi = new HashMap<String, Double>();
-    HashMap<String, String> apName = new HashMap<String, String>();
-    Context ctx;
-    Handler mHandler;
-    WifiList List;
-    String APs = "";
-    ArrayList<WifiPoint> APFiltered = new ArrayList<WifiPoint>();
+    private View myFragmentView;
+    private LinearLayout linear;
+    private FloatingActionButton fabLocation;
+//    private ImageView ivMap;
+
+    private double x, y;
+    private ArrayList<String> M = new ArrayList<String>();
+    private HashMap<String, Double> apX = new HashMap<String, Double>();
+    private HashMap<String, Double> apY = new HashMap<String, Double>();
+    private HashMap<String, Double> apRssi = new HashMap<String, Double>();
+    private HashMap<String, String> apName = new HashMap<String, String>();
+    private Context mContext;
+    private Worker mWorker;
+    private Handler mHandler;
+    private WifiList List;
+    private String APs = "";
+    private ArrayList<WifiPoint> APFiltered = new ArrayList<WifiPoint>();
 
     private WifiManager manager;
     private WifiReceiver receiver;
-    private List<ScanResult> result;
+    private java.util.List<ScanResult> result;
 
-    private static final int REQUEST_FINE_LOCATION = 0;
+    private static final int REQUEST_FINE_LOCATION = 124;
+    private String eName;
 
-    public MapActivity() {
+    public MapFragment() {
+        // Required empty public constructor
     }
 
+    public static MapFragment newInstance() {
+        MapFragment fragment = new MapFragment();
+        return fragment;
+    }
+
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Bundle bundle = this.getArguments();
+        if (bundle != null) {
+            eName = bundle.getString("eName");
+        }
+        mContext = getActivity();
+        List = new WifiList();
+        manager = (WifiManager) getActivity().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        receiver = new WifiReceiver();
+        getActivity().registerReceiver(receiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+
+        initAPData();
+        mWorker = new Worker(mContext);
+        mWorker.start();
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(eName);
+        myFragmentView = inflater.inflate(R.layout.fragment_map, container, false);
+//        ivMap = myFragmentView.findViewById(R.id.iv_fm_map);
+        linear = myFragmentView.findViewById(R.id.linear);
+        fabLocation = myFragmentView.findViewById(R.id.fab_location);
+        return myFragmentView;
+    }
+
+    @Override
+    public void onResume() {
+        getActivity().registerReceiver(receiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+        mWorker.shouldContinue = true;
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        getActivity().unregisterReceiver(receiver);
+        mWorker.shouldContinue = false;
+        super.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        mWorker.shouldContinue = false;
+        try {
+            mWorker.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        super.onDestroy();
+    }
+
+    public void initAPData() {
+        DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
+        mRootRef.child("events").child(eName).child("Wifi").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot db : dataSnapshot.getChildren()) {
+                    String _bssid = db.getKey().toString();
+                    String _name = db.child("name").getValue().toString();
+                    Double _x = Double.parseDouble(db.child("x").getValue().toString());
+                    Double _y = Double.parseDouble(db.child("y").getValue().toString());
+                    Double _rssi = Double.parseDouble(db.child("rssi").getValue().toString());
+
+                    M.add(_bssid);
+                    apName.put(_bssid, _name);
+                    apX.put(_bssid, _x);
+                    apY.put(_bssid, _y);
+                    apRssi.put(_bssid, _rssi);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+            }
+        });
+
+    }
 
     class Worker extends Thread {
         Context ctx;
+        boolean shouldContinue;
 
         public Worker(Context ctx) {
             mHandler = new Handler();
             this.ctx = ctx;
+            this.shouldContinue = true;
         }
 
         @SuppressWarnings("static-access")
         public void run() {
 
-            while (true) {
+            while (shouldContinue) {
                 mHandler.post(new Runnable() {
                     public void run() {
+                        linear.removeAllViews();
                         scanNetworks();
                         calculatePosition();
-                        Draw2d d = new Draw2d(MapActivity.this);
+                        Draw2d d = new Draw2d(getActivity());
 
-                        TextView tvInfo = new TextView(MapActivity.this);
+                        TextView tvInfo = new TextView(getActivity());
                         String Info = "position: x=" + String.valueOf((int) x) + " , y=" + String.valueOf((int) y) + "\n" + APs;
                         tvInfo.setText(Info);
                         tvInfo.setTextColor(Color.BLACK);
                         tvInfo.setBackgroundColor(Color.WHITE);
 
-                        LinearLayout linearLayout = new LinearLayout(MapActivity.this);
-                        linearLayout.setOrientation(LinearLayout.VERTICAL);
-                        linearLayout.addView(tvInfo);
-                        linearLayout.addView(d);
-                        setContentView(linearLayout);
-
-//                        setContentView(d);
+                        linear.setOrientation(LinearLayout.VERTICAL);
+//                        linear.addView(tvInfo);
+                        linear.addView(d);
 
                         Log.v("position", x + " : " + y);
                         Log.d("APs", APs);
                     }
                 });
                 try {
-                    this.sleep(500);
+                    this.sleep(1000);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -145,6 +242,7 @@ public class MapActivity extends AppCompatActivity {
             }
         }
 
+
         double[][] positions = new double[3][2];
         double[] distances = new double[3];
 
@@ -163,7 +261,7 @@ public class MapActivity extends AppCompatActivity {
                 positions[n][1] = apY.get(APFiltered.get(i).BSSID);
                 n++;
                 String range = new DecimalFormat("##.####").format(Range);
-                APs += apName.get(APFiltered.get(i).BSSID) + "\t\t" + APFiltered.get(i).BSSID + "\t\t" + APFiltered.get(i).average + "\t" + range + "\n";
+                APs += apName.get(APFiltered.get(i).BSSID) + "\t\t" + APFiltered.get(i).BSSID + "\t\t" + APFiltered.get(i).average + "\t" + APFiltered.get(i).round + "\t\t" + range + "\n";
             }
         }
 
@@ -176,57 +274,10 @@ public class MapActivity extends AppCompatActivity {
             x = calculatedPosition[0];
             y = calculatedPosition[1];
         } catch (Throwable e) {
-            Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
             e.printStackTrace();
         }
         System.out.println("X:" + x);
         System.out.println("Y:" + y);
-
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_map);
-
-        manager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
-        receiver = new WifiReceiver();
-        registerReceiver(receiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
-
-        if (!mayRequestLocation()) ;
-
-        ctx = this;
-        List = new WifiList();
-
-        initData();
-        Worker t = new Worker(ctx);
-        t.start();
-    }
-
-    public void initData() {
-        DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
-        mRootRef.child("events").child("CPE floor 4").child("Wifi").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot db : dataSnapshot.getChildren()) {
-                    String _bssid = db.getKey().toString();
-                    String _name = db.child("name").getValue().toString();
-                    Double _x = Double.parseDouble(db.child("x").getValue().toString());
-                    Double _y = Double.parseDouble(db.child("y").getValue().toString());
-                    Double _rssi = Double.parseDouble(db.child("rssi").getValue().toString());
-
-                    M.add(_bssid);
-                    apName.put(_bssid,_name);
-                    apX.put(_bssid,_x);
-                    apY.put(_bssid,_y);
-                    apRssi.put(_bssid,_rssi);
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-            }
-        });
 
     }
 
@@ -249,12 +300,10 @@ public class MapActivity extends AppCompatActivity {
             c.drawPaint(paint);
             paint.setAntiAlias(true);
 
-            Bitmap bmp = BitmapFactory.decodeResource(getResources(),
-                    R.drawable.cpe_floor4);
+            Bitmap bmp = BitmapFactory.decodeResource(getResources(), R.drawable.cpe_floor4);
             Bitmap img;
             if (getWidth() / getHeight() <= bmp.getWidth() / bmp.getHeight()) {
-                img = Bitmap.createScaledBitmap(bmp, getWidth(),
-                        bmp.getHeight() * getWidth() / bmp.getWidth(), true);
+                img = Bitmap.createScaledBitmap(bmp, getWidth(), bmp.getHeight() * getWidth() / bmp.getWidth(), true);
 
                 c.drawBitmap(img, 0, (getHeight() - img.getHeight()) / 2, paint);
                 xmin = 0;
@@ -291,13 +340,13 @@ public class MapActivity extends AppCompatActivity {
             paint.setColor(Color.GRAY);
             for (int i = 0; i <= 25; i++) {
                 for (int j = 0; j <= 20; j++) {
-                    c.drawCircle(xmin + (i * img.getWidth() / 25), ymax - (j * img.getHeight() / 20), 2, paint);
+                    c.drawPoint(xmin + (i * img.getWidth() / 25), ymax - (j * img.getHeight() / 20), paint);
                 }
             }
 
-//            //draw APs
-            paint.setColor(Color.RED);
-            for(int i = 0; i < M.size() ;i++) {
+            //draw APs
+            paint.setColor(Color.YELLOW);
+            for (int i = 0; i < M.size(); i++) {
                 double xx = apX.get(M.get(i));
                 double yy = apY.get(M.get(i));
                 c.drawCircle(xmin + ((int) xx * img.getWidth() / 25), ymax - ((int) yy * img.getHeight() / 20), 10, paint);
@@ -316,18 +365,6 @@ public class MapActivity extends AppCompatActivity {
             c.drawCircle(xmin + ((int) x * img.getWidth() / 25), ymax - ((int) y * img.getHeight() / 20), 15, paint);
 
         }
-    }
-
-    @Override
-    protected void onResume() {
-        registerReceiver(receiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
-        super.onResume();
-    }
-
-    @Override
-    protected void onPause() {
-        unregisterReceiver(receiver);
-        super.onPause();
     }
 
     class WifiReceiver extends BroadcastReceiver {
@@ -354,31 +391,35 @@ public class MapActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_FINE_LOCATION: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // The requested permission is granted.
-                    scanNetworks();
-                } else {
-                    // The user disallowed the requested permission.
-                    mayRequestLocation();
-                }
-                return;
-            }
-        }
-    }
+//    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+//        switch (requestCode) {
+//            case REQUEST_FINE_LOCATION: {
+//                // If request is cancelled, the result arrays are empty.
+//                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                    // The requested permission is granted.
+//                    setMapFragment();
+//                } else {
+//                    // The user disallowed the requested permission.
+//                    mayRequestLocation();
+//                }
+//                return;
+//            }
+//        }
+//    }
 
-    private boolean mayRequestLocation() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            return true;
-        }
-        if (checkSelfPermission(ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            return true;
-        }
-        requestPermissions(new String[]{ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
-        return false;
-    }
+    //TODO fix them
+//    private boolean mayRequestLocation() {
+//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+//            return true;
+//        }
+//        if (ActivityCompat.checkSelfPermission(getContext(),
+//                android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+//                ActivityCompat.checkSelfPermission(getContext(),
+//                        android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            return true;
+//        }
+//        requestPermissions(new String[]{ACCESS_FINE_LOCATION}, REQUEST_FINE_LOCATION);
+//        return false;
+//    }
+
 }

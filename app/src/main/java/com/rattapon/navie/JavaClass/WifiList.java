@@ -1,4 +1,4 @@
-package com.rattapon.navie;
+package com.rattapon.navie.JavaClass;
 
 import java.util.ArrayList;
 
@@ -32,10 +32,12 @@ public class WifiList {
         if (tempPoint.max < level) {
             tempPoint.max = level;
         }
-        if(tempPoint.round <= 5) {
-            tempPoint.average = ((tempPoint.average * tempPoint.round) + level) / (tempPoint.round + 1);
-        }
+//        tempPoint.average = ((tempPoint.average * tempPoint.round) + level) / (tempPoint.round + 1);
+
+        tempPoint.average = (tempPoint.average * 2 + level) / 3;
         tempPoint.round = tempPoint.round + 1;
+        if (tempPoint.round > 100)
+            tempPoint.round = 0;
         List.set(index, tempPoint);
     }
 

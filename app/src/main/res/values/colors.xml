@@ -7,9 +7,9 @@
     <color name="colorGray">#95989A</color>
     <color name="colorLoginButton">#EDEDED</color>
 
-    <color name="statusBarColor">#F5F5F5</color>
+    <color name="statusBarColor">#001E2C</color>
     <color name="toolbarColor">#00293C</color>
-    <color name="toolbarTextColor">#424242</color>
+    <color name="toolbarTextColor">#FFFFFF</color>
     <color name="colorCyan">#009688</color>
 
 

@@ -1,4 +1,4 @@
-package com.rattapon.navie;
+package com.rattapon.navie.JavaClass;
 
 /**
  * Created by rattapon on 11/12/2017.

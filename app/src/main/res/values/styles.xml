@@ -4,7 +4,7 @@
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorPrimaryDark">@color/statusBarColor</item>
         <item name="colorAccent">@color/colorAccent</item>
 
     </style>
@@ -12,14 +12,25 @@
     <!-- Toolbar style -->
     <style name="Widget.MyApp.Toolbar.Solid" parent="Widget.AppCompat.ActionBar">
         <item name="android:colorControlNormal">@color/toolbarTextColor</item>
-
         <!-- navigation icon color -->
         <item name="android:textColorPrimary">@color/toolbarTextColor</item>
-
         <!-- color of the menu overflow icon -->
         <item name="android:textColorSecondary">@color/toolbarTextColor</item>
-
         <item name="android:actionMenuTextColor">@color/toolbarTextColor</item>
+    </style>
+
+    //Appbar Toolbar
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    //Dialogs
+    <style name="MyAlertDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <!-- Used for the buttons -->
+        <item name="colorAccent">@color/colorPrimaryDark</item>
+        <!-- Used for the title and text -->
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <!-- Used for the background -->
+        <item name="android:background">@color/colorAccent</item>
     </style>
 
 </resources>
