@@ -7,14 +7,4 @@
         android:icon="@drawable/ic_search_white_24dp"
         android:title="Search"
         app:showAsAction="always" />
-    <item
-        android:id="@+id/action_to_events"
-        android:icon="@drawable/ic_event_note_white_24dp"
-        android:title="Events"
-        app:showAsAction="always" />
-    <item
-        android:id="@+id/action_logout"
-        android:icon="@drawable/ic_exit_to_app_white_24dp"
-        android:title="Sign out"
-        app:showAsAction="always" />
 </menu>

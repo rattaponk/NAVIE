@@ -47,6 +47,7 @@ public class EventsFragment extends android.support.v4.app.ListFragment implemen
     private Context mContext;
 
     private List<String> mAllValues;
+    private HashMap<String, String> events = new HashMap<String, String>();
 
     public EventsFragment() {
         // Required empty public constructor
@@ -72,9 +73,10 @@ public class EventsFragment extends android.support.v4.app.ListFragment implemen
         if (getActivity() instanceof SearchFragment.OnItem1SelectedListener) {
             ((SearchFragment.OnItem1SelectedListener) getActivity()).OnItem1SelectedListener(item);
         }
-        Toast.makeText(mContext, item , Toast.LENGTH_SHORT).show();
+        String eid = events.get(item);
+//        Toast.makeText(mContext, item + "\nID : " + eid, Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(getActivity(), MainActivity.class);
-        intent.putExtra("eName", item);
+        intent.putExtra("eID", eid);
         startActivity(intent);
         hideSoftKeyboard(getView());
     }
@@ -155,10 +157,12 @@ public class EventsFragment extends android.support.v4.app.ListFragment implemen
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot db : dataSnapshot.getChildren()) {
-                    String name = db.getKey().toString();
+                    String eid = db.getKey().toString();
+                    String ename =  db.child("title").getValue().toString();
 
-                    mAllValues.add(name);
-                    Log.d("Events", "Add : " + name);
+                    events.put(ename,eid);
+                    mAllValues.add(ename);
+                    Log.d("Events", "Add : " + ename);
                 }
                 mAdapter = new ArrayAdapter<>(mContext, android.R.layout.simple_list_item_1, mAllValues);
                 setListAdapter(mAdapter);

@@ -22,10 +22,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.rattapon.navie.LoginActivity;
-import com.rattapon.navie.MainActivity;
 import com.rattapon.navie.NavigationActivity;
 import com.rattapon.navie.R;
+import com.rattapon.navie.TestNaviActivity;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,7 +40,7 @@ public class SearchFragment extends android.support.v4.app.ListFragment implemen
     private Context mContext;
 
     private List<String> mAllValues;
-    private String eName;
+    private String eID;
     private HashMap<String, Double> sX = new HashMap<String, Double>();
     private HashMap<String, Double> sY = new HashMap<String, Double>();
 
@@ -61,9 +60,34 @@ public class SearchFragment extends android.support.v4.app.ListFragment implemen
         setHasOptionsMenu(true);
         Bundle bundle = this.getArguments();
         if (bundle != null) {
-            eName = bundle.getString("eName");
+            eID = bundle.getString("eID");
         }
         initListData();
+    }
+
+    private void initListData(){
+        mAllValues = new ArrayList<>();
+        DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
+        mRootRef.child("events").child(eID).child("Search").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot db : dataSnapshot.getChildren()) {
+                    String name = db.getKey().toString();
+                    Double x = Double.parseDouble(db.child("x").getValue().toString());
+                    Double y = Double.parseDouble(db.child("y").getValue().toString());
+
+                    mAllValues.add(name);
+                    sX.put(name, x);
+                    sY.put(name, y);
+                }
+                mAdapter = new ArrayAdapter<>(mContext, android.R.layout.simple_list_item_1, mAllValues);
+                setListAdapter(mAdapter);
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+            }
+        });
     }
 
     @Override
@@ -77,12 +101,12 @@ public class SearchFragment extends android.support.v4.app.ListFragment implemen
 
         String xx = sX.get(mAllValues.get(position)).toString();
         String yy = sY.get(mAllValues.get(position)).toString();
-        Toast.makeText(mContext, item + ": x=" + xx + " , y=" + yy, Toast.LENGTH_SHORT).show();
+        Toast.makeText(mContext, item , Toast.LENGTH_SHORT).show();
 //        getFragmentManager().popBackStack();
         //To Navigation
         Intent intent = new Intent(getActivity(), NavigationActivity.class);
         intent.putExtra("tName", item);
-        intent.putExtra("eName", eName);
+        intent.putExtra("eID", eID);
         intent.putExtra("X", x);
         intent.putExtra("Y", y);
         startActivity(intent);
@@ -113,6 +137,7 @@ public class SearchFragment extends android.support.v4.app.ListFragment implemen
         SearchView searchView = (SearchView) searchItem.getActionView();
         searchView.setOnQueryTextListener(this);
         searchView.setQueryHint("Search");
+
 
 //        MenuItem mainItem = menu.findItem(R.id.action_to_search);
 //        mainItem.setVisible(false);
@@ -162,30 +187,6 @@ public class SearchFragment extends android.support.v4.app.ListFragment implemen
         void OnItem1SelectedListener(String item);
     }
 
-    private void initListData(){
-        mAllValues = new ArrayList<>();
-        DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
-        mRootRef.child("events").child(eName).child("Search").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot db : dataSnapshot.getChildren()) {
-                    String name = db.getKey().toString();
-                    Double x = Double.parseDouble(db.child("x").getValue().toString());
-                    Double y = Double.parseDouble(db.child("y").getValue().toString());
-
-                    mAllValues.add(name);
-                    sX.put(name, x);
-                    sY.put(name, y);
-                }
-                mAdapter = new ArrayAdapter<>(mContext, android.R.layout.simple_list_item_1, mAllValues);
-                setListAdapter(mAdapter);
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-            }
-        });
-    }
 
     public void hideSoftKeyboard(View view) {
         InputMethodManager imm = (InputMethodManager) mContext.getSystemService(getActivity().INPUT_METHOD_SERVICE);

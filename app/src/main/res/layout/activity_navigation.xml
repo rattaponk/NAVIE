@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/relative_main"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:id="@+id/relative_main">
+    android:layout_height="match_parent">
 
     <android.support.design.widget.AppBarLayout
         android:id="@+id/appbar"
@@ -18,18 +18,34 @@
             android:background="@color/toolbarColor"
             app:layout_scrollFlags="scroll|enterAlways"
             app:popupTheme="@style/AppTheme.PopupOverlay"
-            app:titleTextColor="@color/toolbarTextColor"
-            app:title="Navigation"/>
+            app:title="Navigation"
+            app:titleTextColor="@color/toolbarTextColor" />
 
     </android.support.design.widget.AppBarLayout>
+
+    <Button
+        android:id="@+id/bt_find"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:layout_below="@+id/appbar"
+        android:layout_marginTop="24dp"
+        android:layout_centerHorizontal="true"
+        android:background="@drawable/round_register"
+        android:foreground="@drawable/ripple_effect_register"
+        android:paddingHorizontal="24dp"
+        android:text="Find new path"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white"
+        android:textSize="20sp" />
+
     <LinearLayout
+        android:id="@+id/linear"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/appbar"
-        android:id="@+id/linear">
+        android:layout_below="@+id/appbar">
 
         <ImageView
-            android:id="@+id/iv_fm_map"
+            android:id="@+id/iv_map"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
@@ -47,7 +63,7 @@
         android:layout_margin="24dp"
         android:src="@drawable/ic_clear_white_24dp"
         app:backgroundTint="@android:color/holo_red_light"
-        app:fabSize="normal"/>
+        app:fabSize="normal" />
 
 
 </RelativeLayout>
