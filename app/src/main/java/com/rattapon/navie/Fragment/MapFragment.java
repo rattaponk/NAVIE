@@ -25,6 +25,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -87,6 +88,9 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
     private static final int REQUEST_FINE_LOCATION = 124;
     private String eID;
 
+    private int[] x_ref = new int[]{7, 10, 5, 10, 15, 3, 5, 10, 15, 14, 14, 18, 23, 3, 15, 5, 15, 10, 6, 19, 23, 17};
+    private int[] y_ref = new int[]{2, 2, 5, 5, 5, 5, 9, 9, 9, 12, 15, 14, 14, 8, 2, 7, 7, 11, 11, 16, 16, 11};
+
     public MapFragment() {
         // Required empty public constructor
     }
@@ -115,7 +119,6 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
                         linear.removeAllViews();
                         scanNetworks();
                         calculatePosition();
-                        Draw2d d = new Draw2d(getActivity());
 
                         TextView tvInfo = new TextView(getActivity());
                         String Info = "position: x=" + String.valueOf((int) x) + " , y=" + String.valueOf((int) y) + "\n" + APs;
@@ -124,15 +127,20 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
                         tvInfo.setBackgroundColor(Color.WHITE);
 
                         linear.setOrientation(LinearLayout.VERTICAL);
-//                        linear.addView(tvInfo);
-                        linear.addView(d);
+                        linear.addView(tvInfo);
+                        if (APFiltered.size() >= 3) {
+                            Draw2d d = new Draw2d(getActivity());
+                            linear.addView(d);
+                        } else {
+                            Toast.makeText(mContext, "Waiting... for find your location", Toast.LENGTH_SHORT).show();
+                        }
 
                         Log.v("position", x + " : " + y);
                         Log.d("APs", APs);
                     }
                 });
                 try {
-                    this.sleep(1000);
+                    this.sleep(500);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -163,16 +171,15 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
             Bitmap bmp = BitmapFactory.decodeResource(getResources(), R.drawable.cpe_floor4);
             int xscale = 0;
             int yscale = 0;
-            if(eID.equals("-L7V3BWZDZOAv2bqsQA1")){
+            if (eID.equals("-L7V3BWZDZOAv2bqsQA1")) {
                 bmp = BitmapFactory.decodeResource(getResources(), R.drawable.nsc_th2018);
                 xscale = 15;
                 yscale = 25;
-            }
-            else if(eID.equals("-L5Xqa4d-PriW5Xcsq37")){
+            } else if (eID.equals("-L5Xqa4d-PriW5Xcsq37")) {
                 bmp = BitmapFactory.decodeResource(getResources(), R.drawable.nsc_n2018);
                 xscale = 25;
                 yscale = 15;
-            }else if(eID.equals("-L5mQoCyRp7LP-RSYaKn")) {
+            } else if (eID.equals("-L5mQoCyRp7LP-RSYaKn")) {
                 bmp = BitmapFactory.decodeResource(getResources(), R.drawable.cpe_floor4);
                 xscale = 25;
                 yscale = 20;
@@ -196,31 +203,31 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
                 ymax = img.getHeight();
             }
 
-//            //draw Line
-//            for (int i = 0; i <= xscale; i++) {
-//                if (i % 5 == 0) {
-//                    paint.setColor(Color.GREEN);
-//                } else {
-//                    paint.setColor(Color.GRAY);
-//                }
-//                c.drawLine(xmin + (i * img.getWidth() / xscale), ymax - (0 * img.getHeight() / yscale), xmin + (i * img.getWidth() / xscale), ymax - (yscale * img.getHeight() / yscale), paint);
-//            }
-//            for (int i = 0; i <= yscale; i++) {
-//                if (i % 5 == 0) {
-//                    paint.setColor(Color.GREEN);
-//                } else {
-//                    paint.setColor(Color.GRAY);
-//                }
-//                c.drawLine(xmin + (0 * img.getWidth() / xscale), ymax - (i * img.getHeight() / yscale), xmin + (xscale * img.getWidth() / xscale), ymax - (i * img.getHeight() / yscale), paint);
-//            }
+            //draw Line
+            for (int i = 0; i <= xscale; i++) {
+                if (i % 5 == 0) {
+                    paint.setColor(Color.GREEN);
+                } else {
+                    paint.setColor(Color.GRAY);
+                }
+                c.drawLine(xmin + (i * img.getWidth() / xscale), ymax - (0 * img.getHeight() / yscale), xmin + (i * img.getWidth() / xscale), ymax - (yscale * img.getHeight() / yscale), paint);
+            }
+            for (int i = 0; i <= yscale; i++) {
+                if (i % 5 == 0) {
+                    paint.setColor(Color.GREEN);
+                } else {
+                    paint.setColor(Color.GRAY);
+                }
+                c.drawLine(xmin + (0 * img.getWidth() / xscale), ymax - (i * img.getHeight() / yscale), xmin + (xscale * img.getWidth() / xscale), ymax - (i * img.getHeight() / yscale), paint);
+            }
 
-//            //draw dot
-//            paint.setColor(Color.GRAY);
-//            for (int i = 0; i <= xscale; i++) {
-//                for (int j = 0; j <= yscale; j++) {
-//                    c.drawPoint(xmin + (i * img.getWidth() / xscale), ymax - (j * img.getHeight() / yscale), paint);
-//                }
-//            }
+            //draw dot
+            paint.setColor(Color.GRAY);
+            for (int i = 0; i <= xscale; i++) {
+                for (int j = 0; j <= yscale; j++) {
+                    c.drawPoint(xmin + (i * img.getWidth() / xscale), ymax - (j * img.getHeight() / yscale), paint);
+                }
+            }
 
             //draw APs
             paint.setColor(Color.YELLOW);
@@ -243,6 +250,10 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
             paint.setColor(Color.BLUE);
             c.drawCircle(xmin + ((int) x * img.getWidth() / xscale), ymax - ((int) y * img.getHeight() / yscale), 15, paint);
 
+//            paint.setColor(Color.DKGRAY);
+//            for (int i = 0; i < x_ref.length ; i++) {
+//                c.drawCircle(xmin + (x_ref[i] * img.getWidth() / xscale), ymax - (y_ref[i] * img.getHeight() / yscale), 10, paint);
+//            }
         }
     }
 
@@ -288,6 +299,12 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
 //        ivMap = myFragmentView.findViewById(R.id.iv_fm_map);
         linear = myFragmentView.findViewById(R.id.linear);
         fabLocation = myFragmentView.findViewById(R.id.fab_location);
+        fabLocation.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                wifiList.List.clear();
+            }
+        });
         return myFragmentView;
     }
 
@@ -336,9 +353,9 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot db : dataSnapshot.getChildren()) {
                     String _eid = db.getKey().toString();
-                    if (_eid .equals("title")){
+                    if (_eid.equals("title")) {
                         String _ename = db.getValue().toString();
-                        ((AppCompatActivity)getActivity()).getSupportActionBar().setTitle(_ename);
+                        ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(_ename);
                     }
                 }
             }
@@ -377,7 +394,7 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
 
     }
 
-    public void initBeaconData(){
+    public void initBeaconData() {
         DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
         mRootRef.child("events").child(eID).child("Beacon").addValueEventListener(new ValueEventListener() {
             @Override
@@ -435,44 +452,48 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
 
         int lol = APFiltered.size();
 
-        double[][] positions = new double[3][2];
-        double[] distances = new double[3];
+        if (APFiltered.size() >= 3) {
+            double[][] positions = new double[3][2];
+            double[] distances = new double[3];
 
-        HashMap<String, Double> RangeFromAps = new HashMap<String, Double>();
-        int n = 0;
-        for (int i = 0; i < APFiltered.size(); i++) {
-            // System.out.println("i="+i);
-            if (M.contains(APFiltered.get(i).BSSID)) {
+            HashMap<String, Double> RangeFromAps = new HashMap<String, Double>();
+            int n = 0;
+            for (int i = 0; i < APFiltered.size(); i++) {
+                // System.out.println("i="+i);
+                if (M.contains(APFiltered.get(i).BSSID)) {
 
-                double pld0 = apRssi.get(APFiltered.get(i).BSSID);
-                double pld = APFiltered.get(i).average;
-                double Ldbm = apRssi.get(APFiltered.get(i).BSSID) - APFiltered.get(i).average;
-                double Range = Math.pow(10, (Ldbm + 7.36) / 26) / 2;
-                RangeFromAps.put(APFiltered.get(i).BSSID, Range);
+                    double pld0 = apRssi.get(APFiltered.get(i).BSSID);
+                    double pld = APFiltered.get(i).average;
+                    double Ldbm = apRssi.get(APFiltered.get(i).BSSID) - APFiltered.get(i).average;
+                    double Range = Math.pow(10, (Ldbm + 7.36) / 26) / 2;
+                    RangeFromAps.put(APFiltered.get(i).BSSID, Range);
 
-                distances[n] = Range;
-                positions[n][0] = apX.get(APFiltered.get(i).BSSID);
-                positions[n][1] = apY.get(APFiltered.get(i).BSSID);
-                n++;
-                String range = new DecimalFormat("##.####").format(Range);
-                APs += apName.get(APFiltered.get(i).BSSID) + "\t\t" + APFiltered.get(i).BSSID + "\t\t" + APFiltered.get(i).average + "\t" + APFiltered.get(i).round + "\t\t" + range + "\n";
+                    distances[n] = Range;
+                    positions[n][0] = apX.get(APFiltered.get(i).BSSID);
+                    positions[n][1] = apY.get(APFiltered.get(i).BSSID);
+                    n++;
+                    String range = new DecimalFormat("##.####").format(Range);
+                    APs += apName.get(APFiltered.get(i).BSSID) + "\t\t" + APFiltered.get(i).BSSID + "\t\t" + APFiltered.get(i).average + "\t" + APFiltered.get(i).round + "\t\t" + range + "\n";
+                }
             }
+
+            try {
+                NonLinearLeastSquaresSolver solver = new NonLinearLeastSquaresSolver(new TrilaterationFunction(positions, distances), new LevenbergMarquardtOptimizer());
+                LeastSquaresOptimizer.Optimum optimum = solver.solve();
+
+                // the answer
+                double[] calculatedPosition = optimum.getPoint().toArray();
+                x = calculatedPosition[0];
+                y = calculatedPosition[1];
+
+                if (x < 0) x = 0;
+                if (y < 0) y = 0;
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+            System.out.println("X:" + x);
+            System.out.println("Y:" + y);
         }
-
-        try {
-            NonLinearLeastSquaresSolver solver = new NonLinearLeastSquaresSolver(new TrilaterationFunction(positions, distances), new LevenbergMarquardtOptimizer());
-            LeastSquaresOptimizer.Optimum optimum = solver.solve();
-
-            // the answer
-            double[] calculatedPosition = optimum.getPoint().toArray();
-            x = calculatedPosition[0];
-            y = calculatedPosition[1];
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-        System.out.println("X:" + x);
-        System.out.println("Y:" + y);
-
     }
 
     public void scanNetworks() {
@@ -495,21 +516,21 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
 
     @Override
     public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
-        for (Beacon beacon: beacons) {
+        for (Beacon beacon : beacons) {
             if (beacon.getServiceUuid() == 0xfeaa && beacon.getBeaconTypeCode() == 0x00) {
                 // This is a Eddystone-UID frame
                 Identifier namespaceId = beacon.getId1();
                 Identifier instanceId = beacon.getId2();
-                Log.d("Beacon", "I see a beacon transmitting namespace id: "+namespaceId+
-                        " and instance id: "+instanceId+
-                        " RSSI: " +beacon.getRssi()+
-                        " approximately "+beacon.getDistance()+" meters away.");
+                Log.d("Beacon", "I see a beacon transmitting namespace id: " + namespaceId +
+                        " and instance id: " + instanceId +
+                        " RSSI: " + beacon.getRssi() +
+                        " approximately " + beacon.getDistance() + " meters away.");
             }
             if (beacon.getServiceUuid() == 0xfeaa && beacon.getBeaconTypeCode() == 0x10) {
                 // This is a Eddystone-URL frame
                 String mac = beacon.getBluetoothAddress();
                 String url = UrlBeaconUrlCompressor.uncompress(beacon.getId1().toByteArray());
-                Log.d("Beacon", "Mac Address: " +mac+ " RSSI: " +beacon.getRssi()+
+                Log.d("Beacon", "Mac Address: " + mac + " RSSI: " + beacon.getRssi() +
                         " url: " + url + " approximately " + beacon.getDistance() + " meters away.");
                 int index = wifiList.isAvailable(mac);
                 if (index != -1) {
@@ -525,10 +546,10 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
                 long pduCount = beacon.getExtraDataFields().get(3);
                 long uptime = beacon.getExtraDataFields().get(4);
 
-                Log.d("Beacon", "The above beacon is sending telemetry version "+telemetryVersion+
-                        ", has been up for : "+uptime+" seconds"+
-                        ", has a battery level of "+batteryMilliVolts+" mV"+
-                        ", and has transmitted "+pduCount+" advertisements.");
+                Log.d("Beacon", "The above beacon is sending telemetry version " + telemetryVersion +
+                        ", has been up for : " + uptime + " seconds" +
+                        ", has a battery level of " + batteryMilliVolts + " mV" +
+                        ", and has transmitted " + pduCount + " advertisements.");
 
             }
         }
@@ -547,6 +568,11 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
     @Override
     public boolean bindService(Intent intent, ServiceConnection serviceConnection, int i) {
         return getActivity().bindService(intent, serviceConnection, i);
+    }
+
+    public interface OnFragmentInteractionListener {
+        public void onFragmentInteraction(double x, double y);
+
     }
 
 //    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
