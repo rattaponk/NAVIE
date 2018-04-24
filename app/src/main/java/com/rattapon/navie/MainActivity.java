@@ -77,7 +77,6 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
     }
 
-
     public void initNavLeft(Bundle savedInstanceState) {
 
         headerNavigationLeft = new AccountHeader().withActivity(this).withCompactStyle(false).withSelectionListEnabledForSingleProfile(false)
@@ -94,16 +93,12 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id, IDrawerItem drawerItem) {
                         if (drawerItem.getIdentifier() == 100) {
-                            Toast.makeText(MainActivity.this, "Profile", Toast.LENGTH_SHORT).show();
                             startActivity(new Intent(MainActivity.this, EventsActivity.class));
                         } else if (drawerItem.getIdentifier() == 200) {
-                            Toast.makeText(MainActivity.this, "Events", Toast.LENGTH_SHORT).show();
                             startActivity(new Intent(MainActivity.this, EventsActivity.class));
                         } else if (drawerItem.getIdentifier() == 300) {
-                            Toast.makeText(MainActivity.this, "About us", Toast.LENGTH_SHORT).show();
                             startActivity(new Intent(MainActivity.this, EventsActivity.class));
                         } else if (drawerItem.getIdentifier() == 400) {
-                            Toast.makeText(MainActivity.this, "Logout", Toast.LENGTH_SHORT).show();
                             signOut();
                         }
                     }
@@ -137,6 +132,14 @@ public class MainActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayShowHomeEnabled(true);
             setSearchFragment();
             return true;
+        } else if (id == R.id.action_to_testacc) {
+            Intent intent = new Intent(MainActivity.this, TestAccuracyActivity.class);
+            intent.putExtra("eID", eID);
+            startActivity(intent);
+        } else if (id == R.id.action_to_savesignal) {
+            Intent intent = new Intent(MainActivity.this, SaveSignalActivity.class);
+            intent.putExtra("eID", eID);
+            startActivity(intent);
         } else if (id == android.R.id.home) {
             onBackPressed();
             hideSoftKeyboard(findViewById(R.id.relative_main));

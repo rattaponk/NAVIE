@@ -3,8 +3,21 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/action_to_testacc"
+        android:icon="@drawable/ic_error_white_24dp"
+        android:title="Accuracy"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_to_savesignal"
+        android:icon="@drawable/ic_save_white_24dp"
+        android:title="Accuracy"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/action_to_search"
         android:icon="@drawable/ic_search_white_24dp"
         android:title="Search"
         app:showAsAction="always" />
+
 </menu>

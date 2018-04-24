@@ -1,9 +1,5 @@
 package com.rattapon.navie;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -16,25 +12,29 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.RemoteException;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -47,11 +47,6 @@ import com.mikepenz.materialdrawer.accountswitcher.AccountHeader;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
-import com.rattapon.navie.JavaClass.DijkstraAlgorithm;
-import com.rattapon.navie.JavaClass.Edge;
-import com.rattapon.navie.JavaClass.Graph;
-import com.rattapon.navie.JavaClass.Participants;
-import com.rattapon.navie.JavaClass.Vertex;
 import com.rattapon.navie.JavaClass.WifiList;
 import com.rattapon.navie.JavaClass.WifiPoint;
 
@@ -66,28 +61,38 @@ import org.altbeacon.beacon.utils.UrlBeaconUrlCompressor;
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
-public class NavigationActivity extends AppCompatActivity implements View.OnClickListener, BeaconConsumer, RangeNotifier {
+public class TestAccuracyActivity extends AppCompatActivity implements View.OnClickListener, BeaconConsumer, RangeNotifier {
 
     private android.support.v7.widget.Toolbar toolbar;
     private LinearLayout linear;
     private ImageView ivMap;
-    private Button btFind;
     private FloatingActionButton fabCancel;
+    private Button btFind;
+    private Button btClear;
+    private Button btSaveAll;
+    private EditText etRealX;
+    private EditText etRealY;
+    private TextView tvRound;
 
     private Drawer.Result navigationDrawerLeft;
     private AccountHeader.Result headerNavigationLeft;
 
     private String tName;
-    private double tX, tY;
-    private double x, y;
+    private double rX, rY;
+    private double x, y, fs_x, fs_y;
     private ArrayList<String> M = new ArrayList<String>();
-    private ArrayList<String> P = new ArrayList<String>();
     private HashMap<String, Double> apX = new HashMap<String, Double>();
     private HashMap<String, Double> apY = new HashMap<String, Double>();
     private HashMap<String, Integer> apRssi = new HashMap<String, Integer>();
@@ -103,17 +108,7 @@ public class NavigationActivity extends AppCompatActivity implements View.OnClic
     private List<ScanResult> result;
     private BeaconManager mBeaconManager;
 
-    private List<Vertex> nodes;
-    private List<Edge> edges;
-    private Graph graph;
-    private LinkedList<Vertex> path;
-    private DijkstraAlgorithm dijkstra;
-
-    private FirebaseAuth mAuth;
-
-    private static final int REQUEST_FINE_LOCATION = 0;
     private String eID;
-    private boolean chk = true;
 
     class Worker extends Thread {
         Context ctx;
@@ -136,17 +131,16 @@ public class NavigationActivity extends AppCompatActivity implements View.OnClic
                         calculatePosition();
 
 
-                        TextView tvInfo = new TextView(NavigationActivity.this);
-                        String Info = "position: x=" + String.valueOf((int) x) + " , y=" + String.valueOf((int) y) + "\n" + APs;
+                        TextView tvInfo = new TextView(TestAccuracyActivity.this);
+                        String Info = "Blue: x=" + String.valueOf((int) x) + " , y=" + String.valueOf((int) y) + "\n" + "Red:  x=" + String.valueOf((int) fs_x) + " , y=" + String.valueOf((int) fs_y) + "\n" + APs;
                         tvInfo.setText(Info);
                         tvInfo.setTextColor(Color.BLACK);
                         tvInfo.setBackgroundColor(Color.WHITE);
 
                         linear.setOrientation(LinearLayout.VERTICAL);
-//                        linear.addView(tvInfo);
-                        Draw2d d = new Draw2d(NavigationActivity.this);
+                        linear.addView(tvInfo);
+                        TestAccuracyActivity.Draw2d d = new TestAccuracyActivity.Draw2d(TestAccuracyActivity.this);
                         linear.addView(d);
-
 
 //                        setContentView(d);
 
@@ -233,81 +227,74 @@ public class NavigationActivity extends AppCompatActivity implements View.OnClic
                 ymax = img.getHeight();
             }
 
-//            //draw Line
-//            for (int i = 0; i <= xscale; i++) {
-//                if (i % 5 == 0) {
-//                    paint.setColor(Color.GREEN);
-//                } else {
-//                    paint.setColor(Color.GRAY);
-//                }
-//                c.drawLine(xmin + (i * img.getWidth() / xscale), ymax - (0 * img.getHeight() / yscale), xmin + (i * img.getWidth() / xscale), ymax - (yscale * img.getHeight() / yscale), paint);
-//            }
-//            for (int i = 0; i <= yscale; i++) {
-//                if (i % 5 == 0) {
-//                    paint.setColor(Color.GREEN);
-//                } else {
-//                    paint.setColor(Color.GRAY);
-//                }
-//                c.drawLine(xmin + (0 * img.getWidth() / xscale), ymax - (i * img.getHeight() / yscale), xmin + (xscale * img.getWidth() / xscale), ymax - (i * img.getHeight() / yscale), paint);
-//            }
-//
-//            //draw dot
-//            paint.setColor(Color.GRAY);
-//            for (int i = 0; i <= xscale; i++) {
-//                for (int j = 0; j <= yscale; j++) {
-//                    c.drawPoint(xmin + (i * img.getWidth() / xscale), ymax - (j * img.getHeight() / yscale), paint);
-//                }
-//            }
+            //draw Line
+            for (int i = 0; i <= xscale; i++) {
+                if (i % 5 == 0) {
+                    paint.setColor(Color.GREEN);
+                } else {
+                    paint.setColor(Color.GRAY);
+                }
+                c.drawLine(xmin + (i * img.getWidth() / xscale), ymax - (0 * img.getHeight() / yscale), xmin + (i * img.getWidth() / xscale), ymax - (yscale * img.getHeight() / yscale), paint);
+            }
+            for (int i = 0; i <= yscale; i++) {
+                if (i % 5 == 0) {
+                    paint.setColor(Color.GREEN);
+                } else {
+                    paint.setColor(Color.GRAY);
+                }
+                c.drawLine(xmin + (0 * img.getWidth() / xscale), ymax - (i * img.getHeight() / yscale), xmin + (xscale * img.getWidth() / xscale), ymax - (i * img.getHeight() / yscale), paint);
+            }
+
+            //draw dot
+            paint.setColor(Color.GRAY);
+            for (int i = 0; i <= xscale; i++) {
+                for (int j = 0; j <= yscale; j++) {
+                    c.drawPoint(xmin + (i * img.getWidth() / xscale), ymax - (j * img.getHeight() / yscale), paint);
+                }
+            }
+            //draw APs
+            paint.setColor(Color.YELLOW);
+            for (int i = 0; i < M.size(); i++) {
+                double xx = apX.get(M.get(i));
+                double yy = apY.get(M.get(i));
+                c.drawCircle(xmin + ((int) xx * img.getWidth() / xscale), ymax - ((int) yy * img.getHeight() / yscale), 8, paint);
+            }
+
             paint.setColor(Color.GREEN);
             for (int i = 0; i < APFiltered.size(); i++) {
                 double xx = apX.get(APFiltered.get(i).BSSID);
                 double yy = apY.get(APFiltered.get(i).BSSID);
                 if (M.contains(APFiltered.get(i).BSSID)) {
-                    c.drawCircle(xmin + ((int) xx * img.getWidth() / xscale), ymax - ((int) yy * img.getHeight() / yscale), 10, paint);
+                    c.drawCircle(xmin + ((int) xx * img.getWidth() / xscale), ymax - ((int) yy * img.getHeight() / yscale), 8, paint);
                 }
             }
 
-            if (!(path == null || path.isEmpty())) {
-                //draw path
-                paint.setStyle(Paint.Style.STROKE);
-                paint.setStrokeWidth(5);
-                paint.setColor(Color.RED);
-                double old_x = path.getFirst().getX();
-                double old_y = path.getFirst().getY();
-                for (Vertex vertex : path) {
-                    double next_x = vertex.getX();
-                    double next_y = vertex.getY();
-                    c.drawLine(xmin + ((int) old_x * img.getWidth() / xscale), ymax - ((int) old_y * img.getHeight() / yscale), xmin + ((int) next_x * img.getWidth() / xscale), ymax - ((int) next_y * img.getHeight() / yscale), paint);
-                    old_x = next_x;
-                    old_y = next_y;
-                }
-            }
-            paint.setStyle(Paint.Style.FILL);
-
-            if(APFiltered.size() >= 3) {
+            if (APFiltered.size() >= 3) {
                 //draw user
                 paint.setColor(Color.BLUE);
                 c.drawCircle(xmin + ((int) x * img.getWidth() / xscale), ymax - ((int) y * img.getHeight() / yscale), 15, paint);
+
+                //draw free-space
+                paint.setColor(Color.RED);
+                c.drawCircle(xmin + ((int) fs_x * img.getWidth() / xscale), ymax - ((int) fs_y * img.getHeight() / yscale), 15, paint);
             }
 
-            //draw destination
-            paint.setColor(Color.RED);
-            c.drawCircle(xmin + ((int) tX * img.getWidth() / xscale), ymax - ((int) tY * img.getHeight() / yscale), 15, paint);
-            paint.setColor(Color.BLACK);
-            c.drawText(tName, xmin + ((int) tX * img.getWidth() / xscale) - 5, ymax - ((int) tY * img.getHeight() / yscale) + 1, paint);
-
+            String sx = etRealX.getText().toString();
+            String sy = etRealY.getText().toString();
+            if (!(TextUtils.isEmpty(sx) || TextUtils.isEmpty(sy))) {
+                paint.setColor(Color.DKGRAY);
+                c.drawCircle(xmin + ((int) rX * img.getWidth() / xscale), ymax - ((int) rY * img.getHeight() / yscale), 15, paint);
+            }
         }
     }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_navigation);
+        setContentView(R.layout.activity_test_accuracy);
 
         eID = getIntent().getStringExtra("eID");
-        tName = getIntent().getStringExtra("tName");
-        tX = getIntent().getDoubleExtra("X", 0);
-        tY = getIntent().getDoubleExtra("Y", 0);
         manager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         receiver = new WifiReceiver();
         registerReceiver(receiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
@@ -315,17 +302,11 @@ public class NavigationActivity extends AppCompatActivity implements View.OnClic
         mContext = this;
         wifiList = new WifiList();
 
-        nodes = new ArrayList<Vertex>();
-        edges = new ArrayList<Edge>();
-        path = new LinkedList<Vertex>();
-
         initInstance();
         initAPData();
         initBeaconData();
-        initParticipant();
         initNavLeft(savedInstanceState);
-        initVertex();
-        initEdge();
+
         mWorker = new Worker(mContext);
         mWorker.start();
     }
@@ -334,11 +315,18 @@ public class NavigationActivity extends AppCompatActivity implements View.OnClic
         linear = findViewById(R.id.linear);
         fabCancel = findViewById(R.id.fab_cancel);
         btFind = findViewById(R.id.bt_find);
+        btClear = findViewById(R.id.bt_clear);
+        btSaveAll = findViewById(R.id.bt_saveall);
         toolbar = findViewById(R.id.toolbar);
+        etRealX = findViewById(R.id.et_rx);
+        etRealY = findViewById(R.id.et_ry);
+        tvRound = findViewById(R.id.tv_round);
         setSupportActionBar(toolbar);
 
         fabCancel.setOnClickListener(this);
         btFind.setOnClickListener(this);
+        btClear.setOnClickListener(this);
+        btSaveAll.setOnClickListener(this);
     }
 
     public void initAPData() {
@@ -346,11 +334,6 @@ public class NavigationActivity extends AppCompatActivity implements View.OnClic
         mRootRef.child("events").child(eID).child("Wifi").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-//                M.clear();
-//                apName.clear();
-//                apX.clear();
-//                apY.clear();
-//                apRssi.clear();
                 for (DataSnapshot db : dataSnapshot.getChildren()) {
                     String _bssid = db.getKey().toString();
                     String _name = db.child("name").getValue().toString();
@@ -378,11 +361,6 @@ public class NavigationActivity extends AppCompatActivity implements View.OnClic
         mRootRef.child("events").child(eID).child("Beacon").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-//                M.clear();
-//                apName.clear();
-//                apX.clear();
-//                apY.clear();
-//                apRssi.clear();
                 for (DataSnapshot db : dataSnapshot.getChildren()) {
                     String _bssid = db.getKey().toString().toUpperCase(); //All Upper
                     String _name = db.child("name").getValue().toString();
@@ -395,71 +373,6 @@ public class NavigationActivity extends AppCompatActivity implements View.OnClic
                     apX.put(_bssid, _x);
                     apY.put(_bssid, _y);
                     apRssi.put(_bssid, _rssi);
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-            }
-        });
-    }
-
-    public void initParticipant() {
-        DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
-        mRootRef.child("events").child(eID).child("participants").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                P.clear();
-                for (DataSnapshot db : dataSnapshot.getChildren()) {
-                    String _ukey = db.getKey().toString();
-
-                    P.add(_ukey);
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-            }
-        });
-
-    }
-
-    public void initVertex() {
-        DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
-        mRootRef.child("events").child(eID).child("Graph").child("Vertexs").orderByChild("id").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot db : dataSnapshot.getChildren()) {
-                    String _name = db.getKey().toString();
-                    int _id = Integer.parseInt(db.child("id").getValue().toString());
-                    Double _x = Double.parseDouble(db.child("x").getValue().toString());
-                    Double _y = Double.parseDouble(db.child("y").getValue().toString());
-
-                    Vertex vertex = new Vertex(_id, _name, _x, _y);
-                    nodes.add(vertex);
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError error) {
-            }
-        });
-    }
-
-    public void initEdge() {
-        DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
-        mRootRef.child("events").child(eID).child("Graph").child("Edges").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                for (DataSnapshot db : dataSnapshot.getChildren()) {
-                    String _name = db.getKey().toString();
-                    int _id = Integer.parseInt(db.child("id").getValue().toString());
-                    int _sid = Integer.parseInt(db.child("sid").getValue().toString()) - 1; //Start id at 1
-                    int _did = Integer.parseInt(db.child("did").getValue().toString()) - 1; //Start id at 1
-
-                    //bidirectional graph
-                    addEdge(_name + "_1", _sid, _did, 1);
-                    addEdge(_name + "_2", _did, _sid, 1);
                 }
             }
 
@@ -485,11 +398,11 @@ public class NavigationActivity extends AppCompatActivity implements View.OnClic
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id, IDrawerItem drawerItem) {
                         if (drawerItem.getIdentifier() == 100) {
-                            startActivity(new Intent(NavigationActivity.this, EventsActivity.class));
+                            startActivity(new Intent(TestAccuracyActivity.this, EventsActivity.class));
                         } else if (drawerItem.getIdentifier() == 200) {
-                            startActivity(new Intent(NavigationActivity.this, EventsActivity.class));
+                            startActivity(new Intent(TestAccuracyActivity.this, EventsActivity.class));
                         } else if (drawerItem.getIdentifier() == 300) {
-                            startActivity(new Intent(NavigationActivity.this, EventsActivity.class));
+                            startActivity(new Intent(TestAccuracyActivity.this, EventsActivity.class));
                         } else if (drawerItem.getIdentifier() == 400) {
                             signOut();
                         }
@@ -506,24 +419,89 @@ public class NavigationActivity extends AppCompatActivity implements View.OnClic
     @Override
     public void onClick(View view) {
         if (view == fabCancel) {
-            Intent intent = new Intent(NavigationActivity.this, MainActivity.class);
+            Intent intent = new Intent(TestAccuracyActivity.this, MainActivity.class);
             intent.putExtra("eID", eID);
             startActivity(intent);
         } else if (view == btFind) {
-            try {
-                path.clear();
-            } catch (Exception e) {
-                e.printStackTrace();
+            hideSoftKeyboard(findViewById(R.id.relative_main));
+            String sx = etRealX.getText().toString();
+            String sy = etRealY.getText().toString();
+            if (!(TextUtils.isEmpty(sx) || TextUtils.isEmpty(sy))) {
+                rX = Double.parseDouble(etRealX.getText().toString());
+                rY = Double.parseDouble(etRealY.getText().toString());
+                double error = EuclideanDistance(x, y);
+                double fs_error = EuclideanDistance(fs_x, fs_y);
+                Toast.makeText(mContext, "1m: " + error + "\n" + "FS: " + fs_error, Toast.LENGTH_LONG).show();
             }
-            graph = new Graph(nodes, edges);
-            dijkstra = new DijkstraAlgorithm(graph);
+        } else if (view == btClear) {
+            wifiList.List.clear();
+        } else if (view == btSaveAll) {
+            btSaveAll.setVisibility(View.INVISIBLE);
+            String sx = etRealX.getText().toString();
+            String sy = etRealY.getText().toString();
+            if (!(TextUtils.isEmpty(sx) || TextUtils.isEmpty(sy))) {
+                rX = Double.parseDouble(etRealX.getText().toString());
+                rY = Double.parseDouble(etRealY.getText().toString());
 
-            int source = findVertex((int) x, (int) y);
-            int destination = findVertex((int) tX, (int) tY);
-            dijkstra.execute(nodes.get(source));
-            path = dijkstra.getPath(nodes.get(destination));
-            if (path == null || path.isEmpty())
-                Toast.makeText(NavigationActivity.this, "Can't find path.", Toast.LENGTH_SHORT).show();
+                final WifiList wifi_list = new WifiList();
+                final ArrayList<WifiPoint> APSave = new ArrayList<WifiPoint>();
+                while (true) {
+                    AsyncTask.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            //TODO your background code
+                            scanNetworks();
+                            APs = "";
+                            wifi_list.List.clear();
+                            for (int i = 0; i < result.size(); i++) {
+                                wifi_list.insertNew(result.get(i).BSSID, result.get(i).SSID, result.get(i).level);
+
+                            }
+                            ArrayList<WifiPoint> AP = wifi_list.List;
+                            for (int i = 0; i < AP.size(); i++) {
+                                if (M.contains(AP.get(i).BSSID)) {
+                                    APSave.add(AP.get(i));
+                                }
+                            }
+//                            tvRound.setText(APSave.size());
+
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
+                    Log.d("round", "round : " + APSave.size());
+                    if (APSave.size() >= 50) {
+                        break;
+                    }
+                }
+                String dir = Environment.getExternalStorageDirectory()
+                        .toString();
+                File folder = new File(dir + "/NavieRSSI");
+                if (!folder.exists()) {
+                    folder.mkdirs();
+                }
+
+                String file = dir + "/NavieRSSI/" + "x" + (int)rX + "_" + "y" + (int)rY + ".txt";
+                File save = new File(file);
+                Log.v("directory", file);
+                try {
+                    save.createNewFile();
+                    FileWriter writer1 = new FileWriter(save, true);
+
+                    for (int i = 0; i < APSave.size(); i++) {
+                        writer1.write(apName.get(APSave.get(i).BSSID) + ", " + APSave.get(i).BSSID + ", " + APSave.get(i).rssi + "\n");
+                    }
+                    writer1.close();
+                    Toast.makeText(mContext, "Save file complete.", Toast.LENGTH_LONG).show();
+
+                } catch (IOException e) {
+                    Toast.makeText(mContext, "Failed: " + e.toString(), Toast.LENGTH_LONG).show();
+                }
+            }
+            btSaveAll.setVisibility(View.VISIBLE);
         }
     }
 
@@ -563,32 +541,42 @@ public class NavigationActivity extends AppCompatActivity implements View.OnClic
                 APFiltered.add(AP_ref.get(i));
             }
         }
-        String key = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        if (APFiltered.size() >= 3) {
-            double[][] positions = new double[3][2];
-            double[] distances = new double[3];
 
-            HashMap<String, Double> RangeFromAps = new HashMap<String, Double>();
-            int n = 0;
-            for (int i = 0; i < APFiltered.size(); i++) {
-                // System.out.println("i="+i);
-                if (M.contains(APFiltered.get(i).BSSID)) {
+        double[][] positions = new double[3][2];
+        double[] distances = new double[3];
 
-                    double pld0 = apRssi.get(APFiltered.get(i).BSSID);
-                    double pld = APFiltered.get(i).average;
-                    double Ldbm = apRssi.get(APFiltered.get(i).BSSID) - APFiltered.get(i).average;
-                    double Range = (Math.pow(10, (Ldbm + 7.36) / 26)) / 2;
-                    RangeFromAps.put(APFiltered.get(i).BSSID, Range);
+        double[][] fs_positions = new double[3][2];
+        double[] fs_distances = new double[3];
 
-                    distances[n] = Range;
-                    positions[n][0] = apX.get(APFiltered.get(i).BSSID);
-                    positions[n][1] = apY.get(APFiltered.get(i).BSSID);
-                    n++;
-                    String range = new DecimalFormat("##.####").format(Range);
-                    APs += apName.get(APFiltered.get(i).BSSID) + "\t\t" + APFiltered.get(i).BSSID + "\t\t" + APFiltered.get(i).average + "\t" + APFiltered.get(i).round + "\t\t" + range + "\n";
-                }
+        HashMap<String, Double> RangeFromAps = new HashMap<String, Double>();
+        int n = 0;
+        for (int i = 0; i < APFiltered.size(); i++) {
+            // System.out.println("i="+i);
+            if (M.contains(APFiltered.get(i).BSSID)) {
+
+                double pld0 = apRssi.get(APFiltered.get(i).BSSID);
+                double pld = APFiltered.get(i).average;
+//                double Ldbm = apRssi.get(APFiltered.get(i).BSSID) - APFiltered.get(i).average;
+                double Ldbm = pld0 - pld;
+                double Range = Math.pow(10, (Ldbm + 7.36) / 26) / 2;
+                double fs_Range = Math.pow(10, (Ldbm) / 20) / 2;
+                RangeFromAps.put(APFiltered.get(i).BSSID, Range);
+
+                distances[n] = Range;
+                positions[n][0] = apX.get(APFiltered.get(i).BSSID);
+                positions[n][1] = apY.get(APFiltered.get(i).BSSID);
+
+                fs_distances[n] = fs_Range;
+                fs_positions[n][0] = apX.get(APFiltered.get(i).BSSID);
+                fs_positions[n][1] = apY.get(APFiltered.get(i).BSSID);
+                n++;
+                String range = new DecimalFormat("##.####").format(Range);
+                double diff = apRssi.get(APFiltered.get(i).BSSID) - APFiltered.get(i).rssi;
+                APs += apName.get(APFiltered.get(i).BSSID) + "\t\t" + APFiltered.get(i).BSSID + "\t\t" + APFiltered.get(i).average + "\t" + diff +  "\t" + APFiltered.get(i).round + "\t\t" + range + "\n";
             }
+        }
 
+        if (APFiltered.size() >= 3) {
             try {
                 NonLinearLeastSquaresSolver solver = new NonLinearLeastSquaresSolver(new TrilaterationFunction(positions, distances), new LevenbergMarquardtOptimizer());
                 LeastSquaresOptimizer.Optimum optimum = solver.solve();
@@ -598,20 +586,24 @@ public class NavigationActivity extends AppCompatActivity implements View.OnClic
                 x = calculatedPosition[0];
                 y = calculatedPosition[1];
 
-                if (x < 0) x = 0;
-                if (y < 0) y = 0;
+                NonLinearLeastSquaresSolver fs_solver = new NonLinearLeastSquaresSolver(new TrilaterationFunction(fs_positions, fs_distances), new LevenbergMarquardtOptimizer());
+                LeastSquaresOptimizer.Optimum fs_optimum = fs_solver.solve();
+
+                // the answer
+                double[] fs_calculatedPosition = fs_optimum.getPoint().toArray();
+                fs_x = fs_calculatedPosition[0];
+                fs_y = fs_calculatedPosition[1];
             } catch (Throwable e) {
                 e.printStackTrace();
             }
+
+            if (x < 0) x = 0;
+            if (y < 0) y = 0;
+            if (fs_x < 0) fs_x = 0;
+            if (fs_y < 0) fs_y = 0;
             System.out.println("X:" + x);
             System.out.println("Y:" + y);
-            if (P.contains(key)) {
-                pushPositionData(true, (int) x, (int) y);
-            } else if (chk) {
-                registerDialog();
-                chk = false;
-            }
-        } else if (P.contains(key)) pushPositionData(false, 404, 404);
+        }
 
     }
 
@@ -641,7 +633,6 @@ public class NavigationActivity extends AppCompatActivity implements View.OnClic
 
     @Override
     public void onDestroy() {
-        pushPositionData(false, 505, 505);
         mWorker.shouldContinue = false;
         try {
             mWorker.join();
@@ -653,9 +644,14 @@ public class NavigationActivity extends AppCompatActivity implements View.OnClic
 
     @Override
     public void onBackPressed() {
-        Intent intent = new Intent(NavigationActivity.this, MainActivity.class);
+        Intent intent = new Intent(TestAccuracyActivity.this, MainActivity.class);
         intent.putExtra("eID", eID);
         startActivity(intent);
+    }
+
+    public void hideSoftKeyboard(final View view) {
+        final InputMethodManager imm = (InputMethodManager) getSystemService(this.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
     public void scanNetworks() {
@@ -702,32 +698,19 @@ public class NavigationActivity extends AppCompatActivity implements View.OnClic
                 }
             }
             // Do we have telemetry data?
-            if (beacon.getExtraDataFields().size() > 0) {
-                long telemetryVersion = beacon.getExtraDataFields().get(0);
-                long batteryMilliVolts = beacon.getExtraDataFields().get(1);
-                long pduCount = beacon.getExtraDataFields().get(3);
-                long uptime = beacon.getExtraDataFields().get(4);
-
-                Log.d("Beacon", "The above beacon is sending telemetry version " + telemetryVersion +
-                        ", has been up for : " + uptime + " seconds" +
-                        ", has a battery level of " + batteryMilliVolts + " mV" +
-                        ", and has transmitted " + pduCount + " advertisements.");
-
-            }
+//            if (beacon.getExtraDataFields().size() > 0) {
+//                long telemetryVersion = beacon.getExtraDataFields().get(0);
+//                long batteryMilliVolts = beacon.getExtraDataFields().get(1);
+//                long pduCount = beacon.getExtraDataFields().get(3);
+//                long uptime = beacon.getExtraDataFields().get(4);
+//
+//                Log.d("Beacon", "The above beacon is sending telemetry version " + telemetryVersion +
+//                        ", has been up for : " + uptime + " seconds" +
+//                        ", has a battery level of " + batteryMilliVolts + " mV" +
+//                        ", and has transmitted " + pduCount + " advertisements.");
+//
+//            }
         }
-    }
-
-    private void addEdge(String laneId, int sourceLocNo, int destLocNo, int duration) {
-        Edge lane = new Edge(laneId, nodes.get(sourceLocNo), nodes.get(destLocNo), duration);
-        edges.add(lane);
-    }
-
-    private int findVertex(double x, double y) {
-        for (int i = 0; i < nodes.size(); i++) {
-            if (nodes.get(i).getX() == x && nodes.get(i).getY() == y)
-                return i;
-        }
-        return -1;
     }
 
     private void signOut() {
@@ -742,7 +725,7 @@ public class NavigationActivity extends AppCompatActivity implements View.OnClic
                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         FirebaseAuth.getInstance().signOut();
-                        startActivity(new Intent(NavigationActivity.this, LoginActivity.class));
+                        startActivity(new Intent(TestAccuracyActivity.this, LoginActivity.class));
                     }
                 })
                 .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
@@ -754,31 +737,10 @@ public class NavigationActivity extends AppCompatActivity implements View.OnClic
                 .show();
     }
 
-    public void registerDialog() {
-        AlertDialog.Builder builder;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            builder = new AlertDialog.Builder(this, R.style.MyAlertDialogStyle);
-        } else {
-            builder = new AlertDialog.Builder(this);
-        }
-        builder.setTitle("Register")
-                .setMessage("Register to this event success.")
-                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        pushPositionData(true, (int) x, (int) y);
-                        chk = true;
-                    }
-                })
-                .setIcon(android.R.drawable.ic_dialog_info)
-                .show();
-    }
-
-    public void pushPositionData(boolean a, int x, int y) {
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        String key = currentUser.getUid();
-        DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
-        DatabaseReference mUsersRef = mRootRef.child("events").child(eID).child("participants");
-        Participants participants = new Participants(a, x, y);
-        mUsersRef.child(key).setValue(participants);
+    double EuclideanDistance(double _x, double _y) {
+        double ycoord = Math.abs(rY - _y);
+        double xcoord = Math.abs(rX - _x);
+        double distance = Math.sqrt(Math.pow(ycoord, 2) + Math.pow(xcoord, 2)) * 2;
+        return distance;
     }
 }

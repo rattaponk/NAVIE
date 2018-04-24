@@ -11,6 +11,7 @@ public class WifiPoint {
     public String SSID;
     public int round;
     public int average;
+    public int rssi;
     public int min;
     public int max;
     // how far from different APs, store information about distances (Range)

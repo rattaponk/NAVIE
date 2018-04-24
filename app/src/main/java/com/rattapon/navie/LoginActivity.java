@@ -73,7 +73,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                                     // Sign in success, update UI with the signed-in user's information
                                     currentUser = mAuth.getCurrentUser();
                                     startActivity(new Intent(LoginActivity.this, EventsActivity.class));
-                                    Toast.makeText(LoginActivity.this, "Login success with " + currentUser.getEmail(), Toast.LENGTH_SHORT).show();
+//                                    Toast.makeText(LoginActivity.this, "Login success with " + currentUser.getEmail(), Toast.LENGTH_SHORT).show();
                                 } else {
                                     // If sign in fails, display a message to the user.
                                     Toast.makeText(LoginActivity.this, "Login failed.\n" + task.getException().getMessage(), Toast.LENGTH_LONG).show();

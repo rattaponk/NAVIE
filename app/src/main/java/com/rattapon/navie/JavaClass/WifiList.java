@@ -26,6 +26,7 @@ public class WifiList {
     public void updateAt(int index, int level) {
         WifiPoint tempPoint = List.get(index);
 
+        tempPoint.rssi = level;
         if (tempPoint.min > level) {
             tempPoint.min = level;
         }
@@ -45,6 +46,7 @@ public class WifiList {
         WifiPoint tempPoint = new WifiPoint();
         tempPoint.round = 1;
         tempPoint.average = level;
+        tempPoint.rssi = level;
         tempPoint.min = level;
         tempPoint.max = level;
         tempPoint.BSSID = BSSID;

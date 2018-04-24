@@ -121,7 +121,8 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
             final String password = etPassword.getText().toString();
             final String conpass = etConPass.getText().toString();
             final String name = etName.getText().toString();
-            final String dob = mDay + "/" + mMonth + "/" + mYear;
+            if (mMonth < 10) mMonth = '0' + mMonth;
+            final String dob = mYear + "-" + mMonth + "-" + mDay;
             final String gender = btgender;
 
             if (isEmailValid(email) && isPasswordValid(password) && isSamePassword() && !name.isEmpty() && !dob.isEmpty()) {
@@ -133,7 +134,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
                                     // Sign in success, update UI with the signed-in user's information
                                     Toast.makeText(RegisterActivity.this, "Authentication success.", Toast.LENGTH_SHORT).show();
                                     FirebaseUser user = mAuth.getCurrentUser();
-                                    pushRegisterData(user, email, name, gender, dob);
+                                    pushRegisterData(user, email, name, dob, gender);
                                     startActivity(new Intent(RegisterActivity.this, EventsActivity.class));
                                 } else {
                                     // If sign in fails, display a message to the user.
@@ -190,11 +191,11 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
             return false;
     }
 
-    public void pushRegisterData(FirebaseUser currentUser,String e,String p, String g, String dob) {
+    public void pushRegisterData(FirebaseUser currentUser,String e,String p, String dob, String g) {
         String key = currentUser.getUid();
         DatabaseReference mRootRef = FirebaseDatabase.getInstance().getReference();
         DatabaseReference mUsersRef = mRootRef.child("users");
-        User user = new User(e,p,g,dob);
+        User user = new User(e,p,dob,g);
         mUsersRef.child(key).setValue(user);
     }
 

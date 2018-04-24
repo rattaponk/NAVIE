@@ -26,6 +26,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.rattapon.navie.EventDetailActivity;
 import com.rattapon.navie.MainActivity;
 import com.rattapon.navie.NavigationActivity;
 import com.rattapon.navie.R;
@@ -75,7 +76,7 @@ public class EventsFragment extends android.support.v4.app.ListFragment implemen
         }
         String eid = events.get(item);
 //        Toast.makeText(mContext, item + "\nID : " + eid, Toast.LENGTH_SHORT).show();
-        Intent intent = new Intent(getActivity(), MainActivity.class);
+        Intent intent = new Intent(getActivity(), EventDetailActivity.class);
         intent.putExtra("eID", eid);
         startActivity(intent);
         hideSoftKeyboard(getView());

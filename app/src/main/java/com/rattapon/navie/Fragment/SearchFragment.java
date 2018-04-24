@@ -39,6 +39,7 @@ public class SearchFragment extends android.support.v4.app.ListFragment implemen
     private ArrayAdapter<String> mAdapter;
     private Context mContext;
 
+    private double nX, nY;
     private List<String> mAllValues;
     private String eID;
     private HashMap<String, Double> sX = new HashMap<String, Double>();
@@ -61,6 +62,8 @@ public class SearchFragment extends android.support.v4.app.ListFragment implemen
         Bundle bundle = this.getArguments();
         if (bundle != null) {
             eID = bundle.getString("eID");
+            nX =  bundle.getDouble("x");
+            nY = bundle.getDouble("y");
         }
         initListData();
     }
@@ -72,7 +75,7 @@ public class SearchFragment extends android.support.v4.app.ListFragment implemen
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 for (DataSnapshot db : dataSnapshot.getChildren()) {
-                    String name = db.getKey().toString();
+                    String name = db.child("name").getValue().toString();
                     Double x = Double.parseDouble(db.child("x").getValue().toString());
                     Double y = Double.parseDouble(db.child("y").getValue().toString());
 
@@ -101,7 +104,7 @@ public class SearchFragment extends android.support.v4.app.ListFragment implemen
 
         String xx = sX.get(mAllValues.get(position)).toString();
         String yy = sY.get(mAllValues.get(position)).toString();
-        Toast.makeText(mContext, item , Toast.LENGTH_SHORT).show();
+//        Toast.makeText(mContext, item , Toast.LENGTH_SHORT).show();
 //        getFragmentManager().popBackStack();
         //To Navigation
         Intent intent = new Intent(getActivity(), NavigationActivity.class);

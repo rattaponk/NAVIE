@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 26
-    buildToolsVersion '26.0.2'
+    buildToolsVersion '27.0.3'
     defaultConfig {
         applicationId "com.rattapon.navie"
         minSdkVersion 21
@@ -20,9 +20,10 @@ android {
 }
 
 dependencies {
-    implementation 'com.google.firebase:firebase-database:11.0.4'
-    implementation 'com.google.firebase:firebase-auth:11.0.4'
+    implementation 'com.google.firebase:firebase-database:11.8.0'
+    implementation 'com.google.firebase:firebase-auth:11.8.0'
     implementation 'com.android.support:support-v4:26.1.0'
+    implementation 'com.google.firebase:firebase-storage:11.8.0'
     compile fileTree(dir: 'libs', include: ['*.jar'])
     androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
         exclude group: 'com.android.support', module: 'support-annotations'
@@ -38,6 +39,7 @@ dependencies {
     compile 'org.altbeacon:android-beacon-library:2+' //Android Beacon Library
     compile 'com.mikepenz.materialdrawer:library:2.9.8' //MaterialDrawer
 
+    compile 'com.github.bumptech.glide:glide:3.7.0'
 //    implementation("com.mikepenz:materialdrawer:6.0.6@aar") {
 //        transitive = true
 //    }
