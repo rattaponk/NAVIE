@@ -40,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
 
     private android.support.v7.widget.Toolbar toolbar;
     private String eID;
+    private String eFPUrl;
 
     private static final int REQUEST_FINE_LOCATION = 124;
 
@@ -54,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         eID = getIntent().getStringExtra("eID");
+        eFPUrl = getIntent().getStringExtra("eFPUrl");
         initInstance();
         initNavLeft(savedInstanceState);
         if (!mayRequestLocation()) ;
@@ -153,6 +155,7 @@ public class MainActivity extends AppCompatActivity {
         Fragment mapFragment = MapFragment.newInstance();
         Bundle bundle = new Bundle();
         bundle.putString("eID", eID);
+        bundle.putString("eFPUrl",eFPUrl);
         mapFragment.setArguments(bundle);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.layout_fragment_container, mapFragment)
@@ -163,6 +166,7 @@ public class MainActivity extends AppCompatActivity {
         SearchFragment searchFragment = new SearchFragment();
         Bundle bundle = new Bundle();
         bundle.putString("eID", eID);
+        bundle.putString("eFPUrl",eFPUrl);
         searchFragment.setArguments(bundle);
         Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.layout_fragment_container);
         if (fragment instanceof SearchFragment == false) {

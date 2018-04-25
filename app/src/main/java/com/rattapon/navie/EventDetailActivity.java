@@ -189,6 +189,7 @@ public class EventDetailActivity extends AppCompatActivity implements View.OnCli
         if(v == btMap){
             Intent intent = new Intent( EventDetailActivity.this, MainActivity.class);
             intent.putExtra("eID", eID);
+            intent.putExtra("eFPUrl", eFPUrl);
             startActivity(intent);
         }
     }

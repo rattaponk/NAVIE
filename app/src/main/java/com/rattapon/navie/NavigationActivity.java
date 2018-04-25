@@ -113,6 +113,7 @@ public class NavigationActivity extends AppCompatActivity implements View.OnClic
 
     private static final int REQUEST_FINE_LOCATION = 0;
     private String eID;
+    private String eFPUrl;
     private boolean chk = true;
 
     class Worker extends Thread {

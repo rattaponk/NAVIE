@@ -42,6 +42,7 @@ public class SearchFragment extends android.support.v4.app.ListFragment implemen
     private double nX, nY;
     private List<String> mAllValues;
     private String eID;
+    private String eFPUrl;
     private HashMap<String, Double> sX = new HashMap<String, Double>();
     private HashMap<String, Double> sY = new HashMap<String, Double>();
 
@@ -62,6 +63,7 @@ public class SearchFragment extends android.support.v4.app.ListFragment implemen
         Bundle bundle = this.getArguments();
         if (bundle != null) {
             eID = bundle.getString("eID");
+            eFPUrl = bundle.getString("eFPUrl");
             nX =  bundle.getDouble("x");
             nY = bundle.getDouble("y");
         }

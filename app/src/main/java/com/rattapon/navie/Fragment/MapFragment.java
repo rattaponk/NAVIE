@@ -1,6 +1,7 @@
 package com.rattapon.navie.Fragment;
 
 
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -13,16 +14,20 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.media.Image;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.RemoteException;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.ThemedSpinnerAdapter;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,6 +36,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -38,6 +46,10 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FileDownloadTask;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageReference;
 import com.lemmingapex.trilateration.NonLinearLeastSquaresSolver;
 import com.lemmingapex.trilateration.TrilaterationFunction;
 import com.rattapon.navie.JavaClass.Participants;
@@ -59,6 +71,8 @@ import org.altbeacon.beacon.utils.UrlBeaconUrlCompressor;
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -106,7 +120,13 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
 
     private static final int REQUEST_FINE_LOCATION = 124;
     private String eID;
+    private String eFPUrl;
+    private Bitmap bmpFP;
+    private StorageReference storageRef;
     private boolean chk = true;
+    private boolean chk_download = false;
+
+    ProgressDialog progressDialog;
 
     private int[] x_ref = new int[]{7, 10, 5, 10, 15, 3, 5, 10, 15, 14, 14, 18, 23, 3, 15, 5, 15, 10, 6, 19, 23, 17};
     private int[] y_ref = new int[]{2, 2, 5, 5, 5, 5, 9, 9, 9, 12, 15, 14, 14, 8, 2, 7, 7, 11, 11, 16, 16, 11};
@@ -148,8 +168,10 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
 
                         linear.setOrientation(LinearLayout.VERTICAL);
                         linear.addView(tvInfo);
-                        Draw2d d = new Draw2d(getActivity());
-                        linear.addView(d);
+                        if (chk_download) {
+                            Draw2d d = new Draw2d(getActivity());
+                            linear.addView(d);
+                        }
 
                         Log.v("position", x + " : " + y);
                         Log.d("APs", APs);
@@ -183,20 +205,19 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
             c.drawPaint(paint);
             paint.setAntiAlias(true);
 
-
-            Bitmap bmp = BitmapFactory.decodeResource(getResources(), R.drawable.cpe_floor4);
+            Bitmap bmp = bmpFP;
             int xscale = 0;
             int yscale = 0;
             if (eID.equals("-L7V3BWZDZOAv2bqsQA1")) {
-                bmp = BitmapFactory.decodeResource(getResources(), R.drawable.nsc_th2018);
+//                bmp = BitmapFactory.decodeResource(getResources(), R.drawable.nsc_th2018);
                 xscale = 15;
                 yscale = 25;
             } else if (eID.equals("-L5Xqa4d-PriW5Xcsq37")) {
-                bmp = BitmapFactory.decodeResource(getResources(), R.drawable.nsc_n2018);
+//                bmp = BitmapFactory.decodeResource(getResources(), R.drawable.nsc_n2018);
                 xscale = 25;
                 yscale = 15;
             } else if (eID.equals("-L5mQoCyRp7LP-RSYaKn")) {
-                bmp = BitmapFactory.decodeResource(getResources(), R.drawable.cpe_floor4);
+//                bmp = BitmapFactory.decodeResource(getResources(), R.drawable.cpe_floor4);
                 xscale = 25;
                 yscale = 20;
             }
@@ -316,6 +337,7 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
         Bundle bundle = this.getArguments();
         if (bundle != null) {
             eID = bundle.getString("eID");
+            eFPUrl = bundle.getString("eFPUrl");
         }
         mContext = getActivity();
         wifiList = new WifiList();
@@ -323,6 +345,9 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
         receiver = new WifiReceiver();
         getActivity().registerReceiver(receiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
 
+        progressDialog = new ProgressDialog(getActivity());
+        storageRef = FirebaseStorage.getInstance().getReference();
+        downloadToLocalFile(storageRef);
         initEName();
         initAPData();
         initBeaconData();
@@ -488,6 +513,53 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
 
     }
 
+    private void downloadToLocalFile(StorageReference fileRef) {
+        StorageReference imageRef = storageRef.child("Floorplans/" + eID + "..png");
+        File dir = new File(Environment.getExternalStorageDirectory() + "/NavieFP");
+        final File file = new File(dir, eID + ".png");
+        try {
+            if (!dir.exists()) {
+                dir.mkdir();
+            }
+            file.createNewFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        final FileDownloadTask fileDownloadTask = imageRef.getFile(file);
+        progressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                fileDownloadTask.cancel();
+            }
+        });
+        progressDialog.show();
+
+        fileDownloadTask.addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                progressDialog.dismiss();
+                bmpFP = BitmapFactory.decodeFile(file.getAbsolutePath());
+                chk_download = true;
+//                mTextView.setText(file.getPath());
+//                mImageView.setImageURI(Uri.fromFile(file));
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                progressDialog.dismiss();
+                Toast.makeText(getActivity(), exception.getMessage(), Toast.LENGTH_LONG).show();
+//                mTextView.setText(String.format("Failure: %s", exception.getMessage()));
+            }
+        }).addOnProgressListener(new OnProgressListener<FileDownloadTask.TaskSnapshot>() {
+            @Override
+            public void onProgress(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                int progress = (int) ((100 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount());
+                progressDialog.setProgress(progress);
+            }
+        });
+    }
+
     public void calculatePosition() {
 
         for (int i = 0; i < result.size(); i++) {
@@ -545,8 +617,7 @@ public class MapFragment extends Fragment implements BeaconConsumer, RangeNotifi
                 n++;
                 String range = new DecimalFormat("##.####").format(Range);
                 APs += apName.get(APFiltered.get(i).BSSID) + "\t\t" + APFiltered.get(i).BSSID + "\t\t" + APFiltered.get(i).average + "\t" + APFiltered.get(i).round + "\t\t" + range + "\n";
-            }
-            else if (bM.contains(APFiltered.get(i).BSSID)) {
+            } else if (bM.contains(APFiltered.get(i).BSSID)) {
                 double pld0 = bRssi.get(APFiltered.get(i).BSSID);
                 double pld = APFiltered.get(i).average;
                 double Ldbm = bRssi.get(APFiltered.get(i).BSSID) - APFiltered.get(i).average;
