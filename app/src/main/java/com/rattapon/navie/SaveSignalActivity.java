@@ -1,6 +1,7 @@
 package com.rattapon.navie;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.Context;
@@ -87,9 +88,7 @@ public class SaveSignalActivity extends AppCompatActivity implements View.OnClic
     private Spinner dropdown;
     private EditText etM;
     private Button btSave;
-
-    private Drawer.Result navigationDrawerLeft;
-    private AccountHeader.Result headerNavigationLeft;
+    private ProgressDialog dialog;
 
     private double x, y;
     private ArrayList<String> M = new ArrayList<String>();
@@ -113,6 +112,9 @@ public class SaveSignalActivity extends AppCompatActivity implements View.OnClic
     private String eID;
     private String select_name;
     private String ssid;
+    private boolean chk_save = false;
+    private WifiPoint selectAP = new WifiPoint();
+    private String metre;
     ArrayList<Integer> rssi = new ArrayList<Integer>();
 
     class Worker extends Thread {
@@ -139,13 +141,29 @@ public class SaveSignalActivity extends AppCompatActivity implements View.OnClic
                         tvInfo.setText(Info);
 
 //                        setContentView(d);
+                        if (chk_save) {
+                            dialog.setMessage("Saving, please wait...");
+                            dialog.show();
+                            ArrayList<WifiPoint> AP = wifiList.List;
+                            for (int i = 0; i < AP.size(); i++) {
+                                if (ssid.equals(AP.get(i).BSSID) && rssi.size() < 10) {
+                                    rssi.add(AP.get(i).rssi);
+                                    break;
+                                }
+                            }
+
+                            if(rssi.size() >= 10) {
+                                writeSignalData();
+                                dialog.dismiss();
+                            }
+                        }
 
                         Log.v("position", x + " : " + y);
                         Log.d("APs", APs);
                     }
                 });
                 try {
-                    this.sleep(200);
+                    this.sleep(250);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -174,7 +192,8 @@ public class SaveSignalActivity extends AppCompatActivity implements View.OnClic
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_save_signal);
 
-        eID = getIntent().getStringExtra("eID");
+//        eID = getIntent().getStringExtra("eID");
+        eID = "-L5mQoCyRp7LP-RSYaKn";
         manager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         receiver = new WifiReceiver();
         registerReceiver(receiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
@@ -184,7 +203,6 @@ public class SaveSignalActivity extends AppCompatActivity implements View.OnClic
 
         initAPData();
         initBeaconData();
-        initNavLeft(savedInstanceState);
         initInstance();
 
         mWorker = new Worker(mContext);
@@ -200,7 +218,7 @@ public class SaveSignalActivity extends AppCompatActivity implements View.OnClic
         etM = findViewById(R.id.et_m);
         btSave = findViewById(R.id.bt_save);
         setSupportActionBar(toolbar);
-
+        dialog = new ProgressDialog(this);
 
 //        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, N);
 //        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -270,46 +288,13 @@ public class SaveSignalActivity extends AppCompatActivity implements View.OnClic
         });
     }
 
-    public void initNavLeft(Bundle savedInstanceState) {
-
-        headerNavigationLeft = new AccountHeader().withActivity(this).withCompactStyle(false).withSelectionListEnabledForSingleProfile(false)
-                .withSavedInstance(savedInstanceState).withHeaderBackground(R.color.colorAccent)
-                .addProfiles(
-                        new ProfileDrawerItem().withName("Rattapon Kaewpinaji").withEmail("rattapon.k@gmail.com")
-                                .withIcon(getResources().getDrawable(R.drawable.navie_logo))
-                ).build();
-        navigationDrawerLeft = new Drawer().withActivity(this).withToolbar(toolbar)
-                .withDisplayBelowToolbar(false).withActionBarDrawerToggleAnimated(true)
-                .withDrawerGravity(Gravity.LEFT).withSavedInstance(savedInstanceState)
-                .withAccountHeader(headerNavigationLeft).withSelectedItem(-1)
-                .withOnDrawerItemClickListener(new Drawer.OnDrawerItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id, IDrawerItem drawerItem) {
-                        if (drawerItem.getIdentifier() == 100) {
-                            startActivity(new Intent(SaveSignalActivity.this, EventsActivity.class));
-                        } else if (drawerItem.getIdentifier() == 200) {
-                            startActivity(new Intent(SaveSignalActivity.this, EventsActivity.class));
-                        } else if (drawerItem.getIdentifier() == 300) {
-                            startActivity(new Intent(SaveSignalActivity.this, EventsActivity.class));
-                        } else if (drawerItem.getIdentifier() == 400) {
-                            signOut();
-                        }
-                    }
-                })
-                .build();
-
-        navigationDrawerLeft.addItem(new PrimaryDrawerItem().withName("Profile").withIcon(getResources().getDrawable(R.drawable.ic_account_circle_white_24dp)).withIdentifier(100));
-        navigationDrawerLeft.addItem(new PrimaryDrawerItem().withName("Events").withIcon(getResources().getDrawable(R.drawable.ic_event_note_white_24dp)).withIdentifier(200));
-        navigationDrawerLeft.addItem(new PrimaryDrawerItem().withName("About us").withIcon(getResources().getDrawable(R.drawable.ic_group_white_24dp)).withIdentifier(300));
-        navigationDrawerLeft.addItem(new PrimaryDrawerItem().withName("Logout").withIcon(getResources().getDrawable(R.drawable.ic_exit_to_app_white_24dp)).withIdentifier(400));
-    }
-
     @Override
     public void onClick(View view) {
         if (view == fabCancel) {
             Intent intent = new Intent(SaveSignalActivity.this, MainActivity.class);
             intent.putExtra("eID", eID);
             startActivity(intent);
+            finish();
         } else if (view == btSave) {
             hideSoftKeyboard(findViewById(R.id.relative_main));
             String m = etM.getText().toString();
@@ -383,9 +368,8 @@ public class SaveSignalActivity extends AppCompatActivity implements View.OnClic
 
     public void saveSignalData() {
         btSave.setVisibility(View.INVISIBLE);
-        String metre = etM.getText().toString();
+        metre = etM.getText().toString();
 
-        WifiPoint selectAP = new WifiPoint();
         ssid = apSSID.get(select_name);
         rssi.clear();
 
@@ -396,51 +380,47 @@ public class SaveSignalActivity extends AppCompatActivity implements View.OnClic
                 break;
             }
         }
-
-        while (true) {
-            AsyncTask.execute(new Runnable() {
-                @Override
-                public void run() {
-                    //TODO your background code
-                    scanNetworks();
-                    for (int i = 0; i < result.size(); i++) {
-                        int index = wifiList.isAvailable(result.get(i).BSSID);
-                        if (index != -1) {
-                            wifiList.updateAt(index, result.get(i).level);
-                        } else {
-                            wifiList.insertNew(result.get(i).BSSID, result.get(i).SSID, result.get(i).level);
-                        }
-                    }
-
-                    ArrayList<WifiPoint> AP = wifiList.List;
-                    for (int i = 0; i < AP.size(); i++) {
-                        if (ssid.equals(AP.get(i).BSSID) && rssi.size() < 10) {
-                            rssi.add(AP.get(i).rssi);
-                            break;
-                        }
-                    }
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-
-            });
-            int tmp = rssi.size();
-            if (rssi.size() >= 10) {
-                break;
-            }
-//            new CountDownTimer(5000, 500) {
-//                public void onTick(long millisUntilFinished) {
-//                    tvCD.setText("Seconds remaining: " + millisUntilFinished / 500);
+        chk_save = true;
+//        while (true) {
+//            AsyncTask.execute(new Runnable() {
+//                @Override
+//                public void run() {
+//                    //TODO your background code
+//                    wifiList.List.clear();
+//                    scanNetworks();
+//                    for (int i = 0; i < result.size(); i++) {
+//                        int index = wifiList.isAvailable(result.get(i).BSSID);
+//                        if (index != -1) {
+//                            wifiList.updateAt(index, result.get(i).level);
+//                        } else {
+//                            wifiList.insertNew(result.get(i).BSSID, result.get(i).SSID, result.get(i).level);
+//                        }
+//                    }
+//
+//                    ArrayList<WifiPoint> AP = wifiList.List;
+//                    for (int i = 0; i < AP.size(); i++) {
+//                        if (ssid.equals(AP.get(i).BSSID) && rssi.size() < 10) {
+//                            rssi.add(AP.get(i).rssi);
+//                            break;
+//                        }
+//                    }
+//                    try {
+//                        Thread.sleep(500);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
 //                }
 //
-//                public void onFinish() {
-//                    tvCD.setText("Done!");
-//                }
-//            }.start();
-        }
+//            });
+//            int tmp = rssi.size();
+//            if (rssi.size() >= 10) {
+//                break;
+//            }
+//        }
+
+    }
+
+    public void writeSignalData() {
         int min = selectAP.min;
         int max = selectAP.max;
 
@@ -483,12 +463,24 @@ public class SaveSignalActivity extends AppCompatActivity implements View.OnClic
             Toast.makeText(mContext, "Failed: " + e.toString(), Toast.LENGTH_SHORT).show();
         }
         btSave.setVisibility(View.VISIBLE);
+        chk_save = false;
     }
 
     @Override
     protected void onResume() {
         registerReceiver(receiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+
+
         mBeaconManager = BeaconManager.getInstanceForApplication(this.getApplicationContext());
+        // Sets scanning periods.
+        mBeaconManager.setForegroundScanPeriod(250);
+        mBeaconManager.setBackgroundScanPeriod(250);
+//        mBeaconManager.setBackgroundMode(true);
+        try {
+            mBeaconManager.updateScanPeriods();
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
         // Detect the main Eddystone-UID frame:
         mBeaconManager.getBeaconParsers().add(new BeaconParser().
                 setBeaconLayout(BeaconParser.EDDYSTONE_UID_LAYOUT));
@@ -553,15 +545,6 @@ public class SaveSignalActivity extends AppCompatActivity implements View.OnClic
     @Override
     public void didRangeBeaconsInRegion(Collection<Beacon> beacons, Region region) {
         for (Beacon beacon : beacons) {
-            if (beacon.getServiceUuid() == 0xfeaa && beacon.getBeaconTypeCode() == 0x00) {
-                // This is a Eddystone-UID frame
-                Identifier namespaceId = beacon.getId1();
-                Identifier instanceId = beacon.getId2();
-                Log.d("Beacon", "I see a beacon transmitting namespace id: " + namespaceId +
-                        " and instance id: " + instanceId +
-                        " RSSI: " + beacon.getRssi() +
-                        " approximately " + beacon.getDistance() + " meters away.");
-            }
             if (beacon.getServiceUuid() == 0xfeaa && beacon.getBeaconTypeCode() == 0x10) {
                 // This is a Eddystone-URL frame
                 String mac = beacon.getBluetoothAddress();
@@ -574,19 +557,31 @@ public class SaveSignalActivity extends AppCompatActivity implements View.OnClic
                 } else {
                     wifiList.insertNew(mac, beacon.getBluetoothName(), beacon.getRssi());
                 }
-            }
-            // Do we have telemetry data?
-            if (beacon.getExtraDataFields().size() > 0) {
-                long telemetryVersion = beacon.getExtraDataFields().get(0);
-                long batteryMilliVolts = beacon.getExtraDataFields().get(1);
-                long pduCount = beacon.getExtraDataFields().get(3);
-                long uptime = beacon.getExtraDataFields().get(4);
+                if (chk_save) {
 
-                Log.d("Beacon", "The above beacon is sending telemetry version " + telemetryVersion +
-                        ", has been up for : " + uptime + " seconds" +
-                        ", has a battery level of " + batteryMilliVolts + " mV" +
-                        ", and has transmitted " + pduCount + " advertisements.");
+                }
+            } else if (beacon.getServiceUuid() == 0xfeaa && beacon.getBeaconTypeCode() == 0x00) {
+                // This is a Eddystone-UID frame
+                Identifier namespaceId = beacon.getId1();
+                Identifier instanceId = beacon.getId2();
+                Log.d("Beacon", "I see a beacon transmitting namespace id: " + namespaceId +
+                        " and instance id: " + instanceId +
+                        " RSSI: " + beacon.getRssi() +
+                        " approximately " + beacon.getDistance() + " meters away.");
 
+                // Do we have telemetry data?
+                if (beacon.getExtraDataFields().size() > 0) {
+                    long telemetryVersion = beacon.getExtraDataFields().get(0);
+                    long batteryMilliVolts = beacon.getExtraDataFields().get(1);
+                    long pduCount = beacon.getExtraDataFields().get(3);
+                    long uptime = beacon.getExtraDataFields().get(4);
+
+                    Log.d("Beacon", "The above beacon is sending telemetry version " + telemetryVersion +
+                            ", has been up for : " + uptime + " seconds" +
+                            ", has a battery level of " + batteryMilliVolts + " mV" +
+                            ", and has transmitted " + pduCount + " advertisements.");
+
+                }
             }
         }
     }
